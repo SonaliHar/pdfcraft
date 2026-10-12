@@ -2311,6 +2311,7 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
     let by_line = app.session.stamp_by_line(&author);
     let mut stamp_placed = false;
     let mut image_action: Option<crate::edit_text_ui::ImageAction> = None;
+    let can_paste_image = app.copied_image.is_some();
     let custom_stamp = match app.quick_tool {
         QuickTool::CustomStamp(i) => app.custom_stamps.get(i).cloned(),
         _ => None,
@@ -3090,6 +3091,17 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
                     ui.separator();
                 }
             }
+            // A picture copied here or in another document: pasted onto the page right-clicked.
+            if can_paste_image
+                && view.comments.selected.is_none()
+                && let Some((page, _)) = view.comments.context_at
+            {
+                if ui.add_enabled(can_modify, egui::Button::new(tl!("Paste Image"))).clicked() {
+                    copy_image = Some(comments::CanvasAction::PasteImage(page));
+                    ui.close();
+                }
+                ui.separator();
+            }
             canvas_action = comments::context_menu(ui, view, info, prefs, allowed).or(copy_image);
         });
         (wanted, visible_now)
@@ -3273,6 +3285,7 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
         Some(comments::CanvasAction::Properties(p, i)) => open_props = Some((p, i)),
         Some(comments::CanvasAction::CopyImage(p, i)) => image_action = Some(crate::edit_text_ui::ImageAction::Copy(p, i)),
         Some(comments::CanvasAction::CopyImageFile(p, i)) => image_action = Some(crate::edit_text_ui::ImageAction::CopyFile(p, i)),
+        Some(comments::CanvasAction::PasteImage(p)) => image_action = Some(crate::edit_text_ui::ImageAction::Paste(p)),
         None => {}
     }
     match clicked_link {
@@ -3353,6 +3366,7 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
         Some(crate::edit_text_ui::ImageAction::Save(page, index)) => app.save_page_image(page, index),
         Some(crate::edit_text_ui::ImageAction::Copy(page, index)) => app.copy_page_image(page, index),
         Some(crate::edit_text_ui::ImageAction::CopyFile(page, index)) => app.copy_page_image_file(page, index),
+        Some(crate::edit_text_ui::ImageAction::Paste(page)) => app.paste_image(page),
         None => {}
     }
     if let Some(why) = refused {
