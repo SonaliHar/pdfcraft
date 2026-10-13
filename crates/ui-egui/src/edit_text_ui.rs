@@ -394,6 +394,8 @@ pub(crate) enum ImageAction {
     Save(usize, usize),
     Copy(usize, usize),
     CopyFile(usize, usize),
+    /// Paste Image onto a page (from the page menu).
+    Paste(usize),
 }
 
 fn user_box(xf: &PageXform, info: &DocInfo, page: usize, r: Rect) -> [f64; 4] {
