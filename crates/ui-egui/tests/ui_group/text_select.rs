@@ -214,10 +214,11 @@ fn bottom_lines(n: usize) -> Vec<u8> {
 
 /// Press at `from` and move to `to`, keeping the button down.
 fn press_and_move(h: &mut Harness<'static, PdfCraftApp>, from: Pos2, to: Pos2) {
+    h.event(Event::PointerMoved(from));
     h.event(Event::PointerButton { pos: from, button: PointerButton::Primary, pressed: true, modifiers: Modifiers::NONE });
-    h.run_steps(1);
-    for k in 1..=4 {
-        h.hover_at(from + (to - from) * (k as f32 / 4.0));
+    h.run_steps(2);
+    for k in 1..=8 {
+        h.event(Event::PointerMoved(from + (to - from) * (k as f32 / 8.0)));
         h.run_steps(1);
     }
 }
@@ -233,20 +234,20 @@ fn page_top(h: &Harness<'static, PdfCraftApp>, page: usize) -> f32 {
     h.state().views[0].page_screen_rect(page).expect("page on screen").min.y
 }
 
-/// Issue #721: selecting near the bottom of a page with the button held, the wheel keeps
-/// scrolling while the pointer crosses the gap onto the next page. The selection stays on its
-/// own page (a selection can't span pages yet).
+/// Issues #721 and #2110: selecting near the bottom of a page with the button held, the wheel
+/// keeps scrolling while the pointer crosses the gap onto the next page. The drag extends the
+/// selection onto the page the pointer reaches.
 #[test]
 fn a_selection_drag_keeps_scrolling_over_the_gap_and_the_next_page() {
     let (mut h, _) = harness_with(bottom_lines(3), |app| {
         app.set_option("layout", "continuous").unwrap();
-        app.set_option("zoom", "200").unwrap();
+        app.set_option("zoom", "100").unwrap();
     });
     let glyph = |h: &Harness<'static, PdfCraftApp>, g: usize| h.state().views[0].glyph_screen_pos(0, g).expect("glyph on screen");
     // "ends" (glyphs 7..=10) in "Page 1 ends with this line".
     let (from, to) = (glyph(&h, 7), glyph(&h, 10));
     press_and_move(&mut h, from, to);
-    assert_eq!(h.state().views[0].selected_text().as_deref(), Some("ends"));
+    assert_eq!(h.state().views[0].selected_text().as_deref(), Some("ends"), "the drag starts on page 1");
     let (mut over_gap, mut over_next) = (false, false);
     for _ in 0..100 {
         let before = page_top(&h, 0);
@@ -254,7 +255,7 @@ fn a_selection_drag_keeps_scrolling_over_the_gap_and_the_next_page() {
         assert!(page_top(&h, 0) < before - 0.5, "the wheel scrolls during the drag (over the gap yet: {over_gap})");
         let view = &h.state().views[0];
         let on = |page| view.page_screen_rect(page).is_some_and(|r| r.contains(to));
-        over_gap |= !on(0) && !on(1);
+        over_gap |= !on(0);
         over_next = on(1);
         if over_next {
             break;
@@ -262,7 +263,7 @@ fn a_selection_drag_keeps_scrolling_over_the_gap_and_the_next_page() {
     }
     assert!(over_gap && over_next, "the pointer crossed the gap ({over_gap}) onto the next page ({over_next})");
     let held = h.state().views[0].selected_text().expect("still selected");
-    assert!(held.starts_with("ends") && "Page 1 ends with this line".contains(held.as_str()), "the selection stays on page 1: {held:?}");
+    assert_eq!(held, "ends\nPage 2 ends", "the drag carries the selection onto page 2");
     h.event(Event::PointerButton { pos: to, button: PointerButton::Primary, pressed: false, modifiers: Modifiers::NONE });
     h.run_steps(2);
     assert_eq!(h.state().views[0].selected_text(), Some(held), "releasing keeps the selection");

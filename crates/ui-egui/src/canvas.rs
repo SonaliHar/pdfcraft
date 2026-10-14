@@ -224,45 +224,78 @@ pub struct Find {
     pub in_panel: bool,
 }
 
-/// A text selection on one page.
-#[derive(Clone, Copy, Debug, PartialEq)]
+/// A text selection, held as one or more `(page, range)` pieces in document order. An ordinary
+/// drag, multi-click or single-page selection covers one page; a drag or Shift-click that crosses
+/// into the next page extends onto every page it touches. A column drag selects the glyphs in its
+/// screen rectangle on each page it covers, keeping the pieces in page order.
+#[derive(Clone, Debug, PartialEq)]
 struct Selection {
-    page: usize,
-    span: Span,
+    pieces: Vec<PageSelection>,
+}
+
+/// Selected glyphs on one page: reading order between two glyph indices, or the glyphs inside a
+/// rectangle in page-view space, drawn from the corner the drag started at (`rect[0..2]`) to the
+/// pointer (`rect[2..4]`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Piece {
+    Run { anchor: usize, head: usize },
+    Column { rect: [f32; 4] },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-enum Span {
-    /// Reading order, between two glyph indices.
-    Run { anchor: usize, head: usize },
-    /// Column select (#740): the glyphs inside a rectangle in page view space, drawn from the
-    /// corner the drag started at (`rect[0..2]`) to the pointer (`rect[2..4]`).
-    Column { rect: [f32; 4] },
+struct PageSelection {
+    page: usize,
+    piece: Piece,
+}
+
+impl PageSelection {
+    fn range(anchor: usize, head: usize) -> std::ops::Range<usize> {
+        anchor.min(head)..anchor.max(head).saturating_add(1)
+    }
+
+    fn rects(&self, text: &PageText) -> Vec<[f32; 4]> {
+        match self.piece {
+            Piece::Run { anchor, head } => text.line_rects(Self::range(anchor, head)),
+            Piece::Column { rect } => text.glyph_rects(&text.glyphs_in(rect)),
+        }
+    }
+
+    fn text(&self, text: &PageText) -> String {
+        match self.piece {
+            Piece::Run { anchor, head } => text.text_of(Self::range(anchor, head)),
+            Piece::Column { rect } => text.column_text(&text.glyphs_in(rect)),
+        }
+    }
 }
 
 impl Selection {
     fn run(page: usize, anchor: usize, head: usize) -> Self {
-        Self { page, span: Span::Run { anchor, head } }
+        Self { pieces: vec![PageSelection { page, piece: Piece::Run { anchor, head } }] }
     }
 
-    fn range(anchor: usize, head: usize) -> Range<usize> {
-        anchor.min(head)..anchor.max(head).saturating_add(1)
+    /// The run on `page`, if any. A page has one reading-order piece; new input replaces it.
+    fn run_on(&self, page: usize) -> Option<PageSelection> {
+        self.pieces.iter().copied().find(|p| p.page == page).filter(|p| matches!(p.piece, Piece::Run { .. }))
     }
 
-    /// One rectangle per selected piece of a line, in view space (highlighting, markup quads).
-    fn rects(&self, text: &PageText) -> Vec<[f32; 4]> {
-        match self.span {
-            Span::Run { anchor, head } => text.line_rects(Self::range(anchor, head)),
-            Span::Column { rect } => text.glyph_rects(&text.glyphs_in(rect)),
-        }
+    /// Whether any piece targets `page`.
+    fn on(&self, page: usize) -> bool {
+        self.pieces.iter().any(|p| p.page == page)
     }
 
-    /// The selected text, as Copy puts it on the clipboard.
-    fn text(&self, text: &PageText) -> String {
-        match self.span {
-            Span::Run { anchor, head } => text.text_of(Self::range(anchor, head)),
-            Span::Column { rect } => text.column_text(&text.glyphs_in(rect)),
-        }
+    /// Insert `piece` for `page`; every page keeps at most one piece (a new gesture on it replaces
+    /// it), and `pieces` stays in document order.
+    fn put(&mut self, page: usize, piece: Piece) {
+        self.pieces.retain(|p| p.page != page);
+        self.pieces.push(PageSelection { page, piece });
+        self.pieces.sort_by_key(|p| p.page);
+    }
+
+    /// Keep only pages from `first` onward (and the initial page, if before it). Dragging back
+    /// across a page boundary drops pages no longer crossed, so the whole selection ends at the
+    /// pointer's page again.
+    fn truncate_beyond(&mut self, first: usize, keep_first: Option<usize>) {
+        self.pieces.retain(|p| p.page <= first || Some(p.page) == keep_first);
     }
 }
 
@@ -847,7 +880,7 @@ impl DocView {
         self.text_failed.remove(&page);
         self.errors.remove(&page);
         self.last_queue.clear();
-        if self.selection.is_some_and(|s| s.page == page) {
+        if self.has_selection_on(page) {
             self.selection = None;
         }
     }
@@ -862,13 +895,16 @@ impl DocView {
         self.screen_xforms.iter().find(|(p, _)| *p == page).map(|(_, xf)| *xf)
     }
 
-    /// The text selection as markup quadrilaterals in user space: (page, quads).
+    /// The text selection as markup quadrilaterals in user space: the first page's (page, quads).
     pub(crate) fn selection_quads(&self, info: &DocInfo) -> Option<(usize, Vec<[f64; 8]>)> {
-        let s = self.selection?;
-        let text = self.texts.get(&s.page)?;
-        let page = info.pages.get(s.page)?;
-        let quads: Vec<[f64; 8]> = s.rects(text).into_iter().map(|r| page.view_rect_to_quad(r)).collect();
-        (!quads.is_empty()).then_some((s.page, quads))
+        let s = self.selection.as_ref()?;
+        let (piece, text, page) = s.pieces.iter().find_map(|piece| {
+            let text = self.texts.get(&piece.page)?;
+            let page = info.pages.get(piece.page)?;
+            (!piece.rects(text).is_empty()).then_some((piece, text, page))
+        })?;
+        let quads: Vec<[f64; 8]> = piece.rects(text).into_iter().map(|r| page.view_rect_to_quad(r)).collect();
+        (!quads.is_empty()).then_some((piece.page, quads))
     }
 
     /// A page's thumbnail texture, when rendered.
@@ -884,6 +920,11 @@ impl DocView {
 
     pub(crate) fn page_text(&self, page: usize) -> Option<Arc<PageText>> {
         self.texts.get(&page).cloned()
+    }
+
+    /// Whether `page` has selected text.
+    fn has_selection_on(&self, page: usize) -> bool {
+        self.selection.as_ref().is_some_and(|s| s.pieces.iter().any(|piece| piece.page == page))
     }
 
     pub(crate) fn clear_selection(&mut self) {
@@ -993,11 +1034,17 @@ impl DocView {
         Some(xf.view_rect(g.rect).center())
     }
 
-    /// Selected text, if any (⌘C).
+    /// Selected text, if any (⌘C): every piece's text, joined with page breaks between pages.
     pub fn selected_text(&self) -> Option<String> {
-        let s = self.selection?;
-        let t = self.texts.get(&s.page)?;
-        Some(s.text(t)).filter(|x| !x.is_empty())
+        let s = self.selection.as_ref()?;
+        let text = s
+            .pieces
+            .iter()
+            .filter_map(|piece| self.texts.get(&piece.page).map(|t| piece.text(t)))
+            .filter(|t| !t.is_empty())
+            .collect::<Vec<_>>()
+            .join("\n");
+        (!text.is_empty()).then_some(text)
     }
 
     pub fn thumb(&self, page: usize) -> Option<&TextureHandle> {
@@ -1510,8 +1557,8 @@ impl DocView {
             return;
         }
         let mut keep: HashSet<usize> = self.frame_visible.clone();
-        if let Some(s) = self.selection {
-            keep.insert(s.page);
+        if let Some(s) = self.selection.as_ref() {
+            keep.extend(s.pieces.iter().map(|piece| piece.page));
         }
         if let Some(f) = self.find.as_ref() {
             keep.extend(f.matches.iter().map(|(p, _)| *p));
@@ -2749,6 +2796,42 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
             // Text layer: find matches, selection, I-beam and drag-to-select.
             let to_screen = |g: [f32; 4]| xf.view_rect(g);
             if let Some(text) = view.texts.get(&i).cloned() {
+                // A reading-order drag that carries the pointer past this page's edge extends the
+                // selection onto an adjacent page (the issue behind #2110). The drag's head moves
+                // page by page, so the selection stays in document order: pages already behind the
+                // drag are dropped again when the pointer returns over an earlier page.
+                if !matches!(tool, QuickTool::ColumnSelect)
+                    && !ui.input(|inp| inp.modifiers.alt)
+                    && view.selection_drag
+                    && !view.selection.as_ref().is_some_and(|s| s.on(i))
+                    && resp.dragged()
+                    && let Some(head) = pointer.filter(|p| p.y >= 0.0 && (p.y > r.bottom() || p.y <= r.top()))
+                {
+                    let below = head.x >= r.left() && head.x <= r.right() && head.y > r.bottom() && head.y <= avail.bottom();
+                    // A small tolerance around the page's edge, so the pointer inside the earlier
+                    // page never arms the later page.
+                    let above =
+                        head.x >= r.left() && head.x <= r.right() && head.y <= r.top() && head.y >= r.top() - GAP - 1.0 && head.y >= avail.top();
+                    if below || above {
+                        let start = view.selection.as_ref().and_then(|s| s.pieces.first().map(|first| first.page)).unwrap_or(i);
+                        let finish = if below {
+                            let edge = text.nearest(xf.rect.left() + 1.0, 0.0).unwrap_or(0);
+                            if let Some(selection) = view.selection.as_mut() {
+                                selection.put(i, Piece::Run { anchor: edge, head: edge });
+                            }
+                            if start > i { i } else { start }
+                        } else {
+                            let edge = 0;
+                            if let Some(selection) = view.selection.as_mut() {
+                                selection.put(i, Piece::Run { anchor: edge, head: edge });
+                            }
+                            i
+                        };
+                        if let Some(selection) = view.selection.as_mut() {
+                            selection.truncate_beyond(finish, Some(start));
+                        }
+                    }
+                }
                 if let Some(f) = &view.find {
                     for (k, (mp, range)) in f.matches.iter().enumerate() {
                         if *mp != i {
@@ -2765,12 +2848,12 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
                         }
                     }
                 }
-                if let Some(sel) = view.selection.filter(|s| s.page == i) {
+                if let Some(sel) = view.selection.as_ref().and_then(|s| s.run_on(i)) {
                     for lr in sel.rects(&text) {
                         painter.rect_filled(to_screen(lr), CornerRadius::same(1), Color32::from_rgba_unmultiplied(0x3A, 0x7B, 0xF0, 70));
                     }
                     // The rectangle being drawn, as Acrobat shows it while column-selecting.
-                    if let Span::Column { rect } = sel.span
+                    if let Piece::Column { rect } = sel.piece
                         && resp.dragged()
                     {
                         let outline = Stroke::new(1.0, Color32::from_rgb(0x3A, 0x7B, 0xF0));
@@ -2823,22 +2906,24 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
                         let (ox, oy) = xf.screen_to_view(origin);
                         if view.clicks < 2 {
                             view.selection = if column {
-                                Some(Selection { page: i, span: Span::Column { rect: [ox, oy, vx, vy] } })
+                                Some(Selection { pieces: vec![PageSelection { page: i, piece: Piece::Column { rect: [ox, oy, vx, vy] } }] })
                             } else {
                                 text.nearest(ox, oy).map(|a| Selection::run(i, a, a))
                             };
                         }
                     }
                     if resp.dragged()
-                        && let Some(sel) = view.selection.as_mut().filter(|s| s.page == i)
+                        && r.contains(p)
+                        && view.selection.as_ref().is_some_and(|s| s.on(i))
+                        && let Some(index) = view.selection.as_mut().and_then(|s| s.pieces.iter_mut().find(|piece| piece.page == i))
                     {
-                        match &mut sel.span {
-                            Span::Run { head, .. } => {
+                        match &mut index.piece {
+                            Piece::Run { head, .. } => {
                                 if let Some(h) = text.nearest(vx, vy) {
                                     *head = h;
                                 }
                             }
-                            Span::Column { rect } => {
+                            Piece::Column { rect } => {
                                 rect[2] = vx;
                                 rect[3] = vy;
                             }
@@ -2846,7 +2931,9 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
                     }
                     // A rectangle around no text selects nothing.
                     if resp.drag_stopped()
-                        && view.selection.is_some_and(|s| s.page == i && matches!(s.span, Span::Column { .. }) && s.text(&text).is_empty())
+                        && view.selection.as_ref().is_some_and(|s| {
+                            s.run_on(i).is_some_and(|piece| matches!(piece.piece, Piece::Column { .. }) && piece.text(&text).is_empty())
+                        })
                     {
                         view.selection = None;
                     }
@@ -2883,8 +2970,19 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
                         // column selection, which has no anchor glyph; a selection cannot yet
                         // span pages) a click clears the selection.
                         let shift = ui.input(|inp| inp.modifiers.shift);
-                        match (view.selection.as_mut().filter(|s| shift && s.page == i).map(|s| &mut s.span), text.nearest(vx, vy)) {
-                            (Some(Span::Run { head, .. }), Some(h)) => *head = h,
+                        match (shift, text.nearest(vx, vy)) {
+                            // Shift-click extends the first reading-order piece on this page; a
+                            // column selection has no anchor glyph, so it is cleared as before.
+                            (true, Some(h)) if view.selection.as_ref().is_some_and(|s| s.run_on(i).is_some()) => {
+                                if let Some(piece) = view
+                                    .selection
+                                    .as_mut()
+                                    .and_then(|s| s.pieces.iter_mut().find(|p| p.page == i && matches!(p.piece, Piece::Run { .. })))
+                                    && let Piece::Run { head, .. } = &mut piece.piece
+                                {
+                                    *head = h;
+                                }
+                            }
                             _ => view.selection = None,
                         }
                     }
@@ -3444,14 +3542,16 @@ fn selection_actions(ui: &mut egui::Ui, viewport: Rect, view: &mut DocView, info
     if ui.input(|input| input.pointer.is_decidedly_dragging()) {
         return;
     }
-    let Some(selection) = view.selection else { return };
-    let Some(text) = view.texts.get(&selection.page) else { return };
-    let Some(xf) = view.page_xform(selection.page) else { return };
-    let Some(last) = selection.rects(text).last().copied() else { return };
-    let selected = selection.text(text);
-    if selected.is_empty() {
+    let Some(selection) = view.selection.as_ref() else { return };
+    let Some((piece, text)) = selection.pieces.iter().rev().find_map(|piece| {
+        let text = view.texts.get(&piece.page)?;
+        (!piece.text(text).is_empty()).then_some((piece, text))
+    }) else {
         return;
-    }
+    };
+    let Some(xf) = view.page_xform(piece.page) else { return };
+    let Some(last) = piece.rects(text).last().copied() else { return };
+    let selected = piece.text(text);
     let rect = xf.view_rect(last);
     if !viewport.intersects(rect) {
         return;
