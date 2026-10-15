@@ -46,8 +46,8 @@ milestone = "M1"
 status = "shipped"
 commands = ["file.open"]
 tools = ["doc_open"]
-evidence = ["crates/cos/src/document.rs::damaged_xref_is_reconstructed", "crates/cos/src/parser.rs::indirect_stream_with_wrong_length_recovers", "crates/cos/src/document.rs::self_referential_length_does_not_overflow"]
-notes = ""
+evidence = ["crates/render/tests/damaged_arrays.rs::page_tree_retains_readable_siblings_in_order", "crates/render/tests/damaged_arrays.rs::streaming_render_retains_content_after_unreadable_slots", "crates/cos/src/document.rs::damaged_xref_is_reconstructed", "crates/cos/src/parser.rs::indirect_stream_with_wrong_length_recovers", "crates/cos/src/document.rs::self_referential_length_does_not_overflow"]
+notes = "Unreadable page-tree and page-content array slots are skipped without hiding later readable entries (#2660); inspection reports the skipped counts. Annotation arrays and other typed arrays retain their existing behavior."
 
 [[feature]]
 id = "core.malformed-input-safety"
@@ -70,7 +70,7 @@ milestone = "M1"
 status = "shipped"
 commands = []
 tools = ["doc_info"]
-evidence = ["crates/ui-egui/tests/viewer.rs::damaged_files_say_they_were_repaired"]
+evidence = ["crates/render/tests/damaged_arrays.rs::page_tree_counts_consecutive_unreadable_slots", "crates/ui-egui/tests/viewer.rs::damaged_files_say_they_were_repaired"]
 notes = "a notice says the file was repaired; Document Properties ▸ Advanced lists the repairs; doc_info reports them"
 
 [[feature]]
