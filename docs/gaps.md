@@ -47,7 +47,7 @@ update the numbers.
 | 18 | Print production tools absent | feature | 25–45 | [target-app-parity.md](target-app-parity.md) |
 | 19 | Preferences mostly missing | UI/UX | 15–25 | [ui-parity.md](ui-parity.md) |
 | 20 | Scanners, GPU page rendering, pen pressure, Read Out Loud | hardware | 25–50 | [hardware-parity.md](hardware-parity.md) |
-| 21 | Compare: no side-by-side view or filters | feature | 10–20 | [target-app-parity.md](target-app-parity.md) |
+| 21 | Compare: filters by Acrobat's finer kinds of change, page ranges, scanned documents | feature | 8–16 | [target-app-parity.md](target-app-parity.md) |
 | 22 | PDF 2.0 extras, linearization, Arlington validation | spec | 20–35 | [pdf-spec-parity.md](pdf-spec-parity.md) |
 | 23 | Local AI provider (summarize, ask, alt text, redaction suggestions) | AI | 20–40 | [target-app-parity.md](target-app-parity.md) |
 | 24 | Checklist not diffed against Acrobat's own menus | measurement | 4–8 | [target-app-parity.md](target-app-parity.md) |
@@ -334,11 +334,14 @@ update the numbers.
   the CPU and uploaded); pressure-sensitive ink; platform text-to-speech.
 - **Estimate:** 25–50 h; scanners need hardware. **Doc:** [hardware-parity.md](hardware-parity.md).
 
-### 21. Compare: no side-by-side view or filters
+### 21. Compare: filters by Acrobat's finer kinds of change, page ranges, scanned documents
 
-- **Missing:** synchronised side-by-side view, filters by change type, page ranges, scanned
-  documents.
-- **Estimate:** 10–20 h. **Doc:** [target-app-parity.md](target-app-parity.md).
+- **Done:** the synchronised side-by-side view; the Compare panel's Show: Text / Visual filter
+  hides either kind from the list and the shading.
+- **Missing:** telling images, annotations, formatting and background/header-footer changes apart
+  (all of them are Visual today), scrolling the two halves by matching content rather than by
+  offset, page ranges, scanned documents.
+- **Estimate:** 8–16 h. **Doc:** [target-app-parity.md](target-app-parity.md).
 
 ### 22. PDF 2.0 extras, linearization, Arlington validation
 
@@ -366,6 +369,7 @@ update the numbers.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-15 | minor | Gap 21: the side-by-side view had already shipped; the Compare panel filters text changes and visual differences. Estimate 10–20 h → 8–16 h |
 | 2026-10-15 | patch | Gap 24: record localization and installers as partial (unusable Chinese, Telugu and Arabic; unsigned Linux packages) |
 | 2026-10-13 | minor | Gap 6: Organize Pages selects and reveals the current page on open, including after an earlier grid selection elsewhere (#1910). Estimates unchanged. |
 | 2026-10-12 | minor | Gap 6: rubber stamps, explicit image rectangles and PDF-page stamps read upright on rotated pages (#1398). Estimates unchanged. |
