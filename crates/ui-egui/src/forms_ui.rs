@@ -39,6 +39,9 @@ pub struct Focus {
     /// Date fields: the month the calendar shows (year, month 1–12), and where it was drawn.
     pub calendar: Option<(i32, u32)>,
     pub calendar_rect: Option<egui::Rect>,
+    /// Whether the text box had the keyboard at the end of the editor's last frame
+    /// ([`crate::edit_text_ui::lost_focus_once`]).
+    pub(crate) had_focus: bool,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -91,6 +94,7 @@ fn open_focus(f: &FormField, widget: usize) -> Focus {
         press: None,
         calendar: None,
         calendar_rect: None,
+        had_focus: false,
     }
 }
 
@@ -485,6 +489,10 @@ pub(crate) fn overlay(ctx: &egui::Context, view: &mut DocView, info: &DocInfo, f
     let page = w.page?;
     let xf = view.page_xform(page)?;
     let rect = widget_rect(&xf, info, page, w.rect);
+    // Whether a click this frame landed outside the field. Where it landed is `interact_pos`: a
+    // tap's release comes with `PointerGone` (egui-winit sends one with every touch release, and
+    // winit reports Windows pen input as touch), which clears `hover_pos`.
+    let clicked_outside = || ctx.input(|i| i.pointer.any_click() && !i.pointer.interact_pos().is_some_and(|p| rect.contains(p)));
     let zoom = xf.rect.width() / xf.pw.max(1.0);
     let t = Tokens::get(ctx);
     let mut edit = None;
@@ -546,13 +554,14 @@ pub(crate) fn overlay(ctx: &egui::Context, view: &mut DocView, info: &DocInfo, f
                         st.store(ui.ctx(), r.id);
                     }
                 }
+                let lost = crate::edit_text_ui::lost_focus_once(&r, &mut fx.had_focus);
                 let (enter, esc, tab, shift) = ui
                     .input(|i| (i.key_pressed(egui::Key::Enter), i.key_pressed(egui::Key::Escape), i.key_pressed(egui::Key::Tab), i.modifiers.shift));
                 if esc {
                     close = true;
                 } else if tab {
                     next = Some(!shift);
-                } else if r.lost_focus()
+                } else if lost
                     && (!multiline || !enter)
                     && !fx.calendar_rect.is_some_and(|c| ui.input(|i| i.pointer.interact_pos().is_some_and(|p| c.contains(p))))
                 {
@@ -595,9 +604,7 @@ pub(crate) fn overlay(ctx: &egui::Context, view: &mut DocView, info: &DocInfo, f
                         });
                     });
                 });
-            let clicked_away = ctx.input(|i| i.pointer.any_click())
-                && !resp.response.contains_pointer()
-                && !ctx.input(|i| i.pointer.hover_pos()).is_some_and(|p| rect.contains(p));
+            let clicked_away = !resp.response.contains_pointer() && clicked_outside();
             let (tab, shift) = ctx.input(|i| (i.key_pressed(egui::Key::Tab), i.modifiers.shift));
             if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
                 close = true;
@@ -631,8 +638,7 @@ pub(crate) fn overlay(ctx: &egui::Context, view: &mut DocView, info: &DocInfo, f
                     edit = Some(Edit::SetFieldValue { name: f.name.clone(), value: FieldValue::Choice(vec![export]) });
                 }
             }
-            let clicked_away = ctx.input(|i| i.pointer.any_click()) && !ctx.input(|i| i.pointer.hover_pos()).is_some_and(|p| rect.contains(p));
-            if clicked_away {
+            if clicked_outside() {
                 close = true;
             }
         }
