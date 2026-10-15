@@ -16,7 +16,9 @@ let report = import(&mut doc, &bytes)?;                 // XFDF, FDF, XML, CSV o
   (`inreplyto`); field values nested by name, with text preserved across XML comments and processing instructions.
 - **FDF**: fields (with `/Kids` hierarchies) and comments as direct objects.
 - **Form data**: Acrobat's XML (`xfdf:original` keeps names that aren't XML names), CSV and
-  tab-delimited text (a row of names, a row of values).
+  tab-delimited text (a row of names, a row of values). A CSV cell that starts with `=`, `+`, `-`
+  or `@` is written with a leading `'` so a spreadsheet shows it as text instead of running it as
+  a formula; import takes the `'` off again.
 
 Import replaces comments with the same `/NM` (and drops the replaced comment's pop-up), draws
 appearances PdfCraft can draw, and sets values through the form's own checks (formats,
