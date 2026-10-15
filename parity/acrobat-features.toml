@@ -82,8 +82,8 @@ milestone = "M1"
 status = "shipped"
 commands = []
 tools = []
-evidence = ["crates/cos/tests/writer.rs::incremental_saves_stack_on_an_xref_stream_file", "crates/cos/tests/writer.rs::page_tree_loops_in_object_streams_do_not_crash_readers"]
-notes = ""
+evidence = ["crates/cos/tests/generations.rs::indirect_stream_lengths_require_the_referenced_generation", "crates/cos/tests/generations.rs::compressed_objects_only_accept_generation_zero", "crates/cos/tests/writer.rs::incremental_saves_stack_on_an_xref_stream_file", "crates/cos/tests/writer.rs::page_tree_loops_in_object_streams_do_not_crash_readers"]
+notes = "Compressed objects accept generation zero only; indirect stream lengths are resolved by their complete reference. Synthetic regression coverage."
 
 [[feature]]
 id = "core.hybrid-xref"
@@ -298,8 +298,8 @@ milestone = "M1"
 status = "shipped"
 commands = ["file.save_as"]
 tools = ["doc_save"]
-evidence = ["crates/organize/src/tests.rs::full_save_drops_unreachable_objects", "crates/engine/src/tests.rs::full_save_is_readable_and_smaller_after_deletes"]
-notes = ""
+evidence = ["crates/cos/tests/generations.rs::full_save_does_not_turn_stale_references_into_live_ones", "crates/organize/src/tests.rs::full_save_drops_unreachable_objects", "crates/engine/src/tests.rs::full_save_is_readable_and_smaller_after_deletes"]
+notes = "Full rewrites preserve reference-generation identity: stale references become null while live replacement objects remain reachable. Synthetic classic and object-stream save tests; this does not establish general rendering fidelity."
 
 [[feature]]
 id = "core.object-stream-compression"
@@ -334,8 +334,8 @@ milestone = "M1"
 status = "shipped"
 commands = []
 tools = []
-evidence = ["crates/cos/src/document.rs::reads_classic_revision_and_edits_are_copy_on_write"]
-notes = ""
+evidence = ["crates/cos/tests/generations.rs::restoring_snapshot_preserves_changes_to_nonzero_generation_objects", "crates/cos/tests/generations.rs::overlay_generation_changes_do_not_retarget_old_references_or_clones", "crates/cos/tests/generations.rs::references_require_the_current_generation_even_with_a_warm_cache", "crates/cos/src/document.rs::reads_classic_revision_and_edits_are_copy_on_write"]
+notes = "Generation-aware references stay distinct across warm caches, edit overlays and snapshots, including restoration and incremental save/reopen of edited nonzero-generation objects. Broader real-file fidelity remains tracked separately."
 
 [[feature]]
 id = "core.write-validity"
