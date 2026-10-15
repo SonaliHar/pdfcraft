@@ -230,6 +230,17 @@ kind = "translation"
 usage = "Lithuanian UI strings, compiled in by crates/ui-egui/src/i18n/mod.rs"
 sha256 = "17c8579e0e9d1524ffbeb87e7b30c14562dbaac64400826ee786cecfe31648fa"
 
+[[asset]]
+path = "crates/ui-egui/src/i18n/ro.tsv"
+title = "Romanian interface translation catalog"
+author = "PdfCraft contributors"
+source = "Contributor-original: clean-room translations of PdfCraft's English UI labels and user-facing messages; AI-assisted and not yet reviewed line by line by a native Romanian speaker"
+licence = "MIT OR Apache-2.0"
+licence_file = "LICENSE-MIT"
+kind = "translation"
+usage = "Romanian UI strings, compiled in by crates/ui-egui/src/i18n/mod.rs"
+sha256 = "9f4149648084ba6ed3ffbd3b6a3c1637869d82701fcfb7916dd55803fdaead36"
+
 
 [[asset]]
 path = "assets/icons/accessibility.svg"
