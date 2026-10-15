@@ -2016,7 +2016,7 @@ fn flattening_keeps_the_look_and_drops_the_objects() {
     s.apply(id, Edit::SetFieldValue { name: "name".into(), value: FieldValue::Text("Ada".into()) }).unwrap();
     s.apply(id, rect_comment(0, [80.0, 80.0, 120.0, 120.0])).unwrap();
     let red_before = pixel(&s, id, 0, 100, 100);
-    s.apply(id, Edit::Flatten { comments: true, fields: true }).unwrap();
+    s.apply(id, Edit::Flatten { comments: true, fields: true, keep_signature_fields: false }).unwrap();
     let d = s.get(id).unwrap();
     assert!(d.info.annotations.is_empty() && d.form.is_empty(), "no comments or fields remain");
     assert_eq!(pixel(&s, id, 0, 100, 100), red_before, "the rectangle is now page content");

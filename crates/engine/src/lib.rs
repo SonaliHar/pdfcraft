@@ -1531,6 +1531,8 @@ pub enum Edit {
     Flatten {
         comments: bool,
         fields: bool,
+        /// With `fields`, leave signature fields as fields (to sign them afterwards).
+        keep_signature_fields: bool,
     },
     /// Bake Fill & Sign text, marks and signatures into the page. Other comments and fields stay.
     /// A no-op (no undo step) when the document has none.
@@ -1860,8 +1862,8 @@ impl Edit {
             Edit::RemoveLinks { .. } => Label::of("Remove all links"),
             Edit::AddLinks { links, .. } => plural("Create link", "Create links", links.len()),
             Edit::Sanitize => Label::of("Sanitize document"),
-            Edit::Flatten { comments: true, fields: false } => Label::of("Flatten comments"),
-            Edit::Flatten { comments: false, fields: true } => Label::of("Flatten form fields"),
+            Edit::Flatten { comments: true, fields: false, .. } => Label::of("Flatten comments"),
+            Edit::Flatten { comments: false, fields: true, .. } => Label::of("Flatten form fields"),
             Edit::Flatten { .. } => Label::of("Flatten"),
             Edit::FlattenFillSign => Label::of("Flatten Fill & Sign"),
             Edit::Protect(_) => Label::of("Protect with password"),
@@ -2444,9 +2446,10 @@ fn run_edit(doc: &mut pdfcraft_cos::Document, edit: &Edit, cx: &mut EditCtx) -> 
         Edit::Sanitize => {
             pdfcraft_redact::sanitize::sanitize(doc)?;
         }
-        Edit::Flatten { comments, fields } => {
+        Edit::Flatten { comments, fields, keep_signature_fields } => {
             let n = pdfcraft_model::pages(doc).len();
-            pdfcraft_edit::flatten(doc, &(0..n).collect::<Vec<_>>(), *comments, *fields)?;
+            let options = pdfcraft_edit::FlattenOptions { comments: *comments, fields: *fields, keep_signature_fields: *keep_signature_fields };
+            pdfcraft_edit::flatten_with(doc, &(0..n).collect::<Vec<_>>(), options)?;
         }
         Edit::FlattenFillSign => {
             let n = pdfcraft_model::pages(doc).len();
