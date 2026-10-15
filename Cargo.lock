@@ -3938,8 +3938,10 @@ dependencies = [
  "craft-quit",
  "eframe",
  "egui",
+ "egui_kittest",
  "fmv-macos-events",
  "log",
+ "pdfcraft-automation",
  "pdfcraft-engine",
  "pdfcraft-ui-egui",
  "pollster 1.0.1",
@@ -4385,6 +4387,7 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+ "web-time",
  "winsafe",
 ]
 

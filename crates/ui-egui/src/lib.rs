@@ -40,6 +40,7 @@ pub use combine_grid::ThumbState as CombineThumb;
 mod combine_ui;
 pub mod docking;
 pub use combine_ui::{Columns as CombineColumns, CombineView, Lock as CombineLock, SortKey};
+pub mod ask_agent;
 mod camera_ui;
 mod commands;
 mod comment_props;
@@ -752,6 +753,10 @@ pub struct PdfCraftApp {
     pub window_title: String,
     /// The UI control channel, when enabled (`--control`; off by default).
     control: Option<control::Control>,
+    pub(crate) ask_agent: ask_agent::AskAgent,
+    /// Runs an automation tool on this window's documents, for the control channel's
+    /// `tool.call` (the desktop app sets it; this crate doesn't depend on the tool table).
+    pub tool_runner: Option<control::ToolRunner>,
     /// A bookmark being renamed in the Bookmarks panel: (path, text so far).
     pub bookmark_rename: Option<(Vec<usize>, String)>,
     /// Number pages dialog settings (1-based pages).
@@ -1037,6 +1042,8 @@ impl PdfCraftApp {
             fonts_ready: false,
             fonts_cjk: theme::CjkPreference::Default,
             control: None,
+            ask_agent: ask_agent::AskAgent::default(),
+            tool_runner: None,
             bookmark_rename: None,
             last_opened_url: None,
             pending_link: None,
@@ -1930,6 +1937,7 @@ impl PdfCraftApp {
     /// sends requests to this app; [`control::serve`] exposes it on loopback.
     pub fn attach_control(&mut self, ctx: &egui::Context) -> control::ControlClient {
         let (control, client) = control::attach(ctx);
+        self.ask_agent.hub = client.agent_hub();
         self.control = Some(control);
         client
     }
@@ -3042,6 +3050,7 @@ impl eframe::App for PdfCraftApp {
         self.poll_print();
         // Shortcuts deferred last frame: the text field has taken that frame's typing since.
         let deferred = std::mem::take(&mut self.deferred_commands);
+        self.ask_agent_input(ctx);
         self.shortcuts(ctx);
         // Scrolling and group-drag previews are transient: never resume after changing tabs,
         // opening a modal/palette, or returning to a window that lost focus.
@@ -3111,6 +3120,7 @@ impl eframe::App for PdfCraftApp {
             // Notices too: a refused field value or a failed save must be seen in full screen.
             self.show_progress(&ctx);
             widgets::toast(self, &ctx);
+            self.ask_agent_show(&ctx);
             self.finish_render_frame(&ctx);
             return;
         }
@@ -3154,6 +3164,7 @@ impl eframe::App for PdfCraftApp {
         dialogs::show(self, &ctx);
         self.show_progress(&ctx);
         widgets::toast(self, &ctx);
+        self.ask_agent_show(&ctx);
         self.finish_render_frame(&ctx);
     }
 }
