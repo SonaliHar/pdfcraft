@@ -125,7 +125,7 @@ pub fn tab_strip(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                             let mut dragged = None;
                             for i in 0..app.views.len() {
                                 let Some(doc) = app.session.get(app.views[i].id) else { continue };
-                                let (name, dirty) = (doc.display_name(), doc.dirty);
+                                let (name, dirty) = (doc.display_name(), doc.dirty || app.views[i].unsaved_turn(doc).is_some());
                                 // A tab showing the document's title names its file on hover.
                                 let file = (name != doc.name).then_some(doc.name.as_str());
                                 let response = tab(
