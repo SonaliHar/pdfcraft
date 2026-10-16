@@ -2397,6 +2397,8 @@ key	Space	Espacio
 	Switch to List view to change the pages it takes.	Cambia a la vista de lista para cambiar las páginas que se incluyen.
 	Expand all	Expandir todo
 	Collapse all	Contraer todo
+	Collapse all pages	Contraer todas las páginas
+	Expand all pages	Expandir todas las páginas
 	Remove page	Quitar página
 	Remove {n} pages	Quitar {n} páginas
 
@@ -2566,3 +2568,7 @@ animation effects	Off	Desactivados
 	Make properties default	Usar como propiedades predeterminadas
 	Pages selected	Páginas seleccionadas
 	Page properties	Propiedades de página
+
+# Historical snapshot notice bar (View signed version / View revision).
+	You are viewing the signed version of “{from}” (revision {rev}). It is a snapshot: changes here won't affect the original.	Estás viendo la versión firmada de «{from}» (revisión {rev}). Es una instantánea: los cambios aquí no afectarán al original.
+	You are viewing revision {rev} of “{from}”. It is a snapshot: changes here won't affect the original.	Estás viendo la revisión {rev} de «{from}». Es una instantánea: los cambios aquí no afectarán al original.
