@@ -1,5 +1,6 @@
 # Where PdfCraft falls short of Acrobat Pro
 
+> **Last reviewed:** 2026-10-15 · **Last updated:** 2026-10-15 · **Change:** minor (gap 3: #2517 a blank line stays a paragraph break; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-15 · **Last updated:** 2026-10-15 · **Change:** minor (gap 12: reading order is scored, not just word F1) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-12 · **Last updated:** 2026-10-13 · **Change:** minor (gap 14: Vietnamese catalog shipped; Hindi/Indonesian/Korean and Arabic RTL remain) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-13 · **Last updated:** 2026-10-13 · **Change:** minor (gap 6: #1910 Organize Pages opens on the current page; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
@@ -95,7 +96,11 @@ update the numbers.
   Legacy non-SFNT previews, mixed-font/style contextual runs, structure-tree fidelity and reliable
   semantic grouping on every untagged PDF remain open. Replacing one line or paragraph no longer
   removes a distinct neighbour whose glyph box overlaps (#1316); a second drawing on the same
-  baseline is still replaced. Estimates are unchanged.
+  baseline is still replaced. A blank line stays a paragraph break. An explicit `TL` is the
+  measured baseline gap, and growing a paragraph so its new row is one leading above the next
+  one does not absorb that paragraph (#2517). A heading and smaller body lines (#1756), a
+  hanging-indent continuation (#2564), and cells in different columns (#1680, #2478) are still
+  grouped by the same geometry. Estimates are unchanged.
 
 - **Missing:** robust in-place editing of text PdfCraft didn't write: subset fonts without the
   needed glyphs, CJK and right-to-left text, rotated text, lists, superscript/subscript, keeping
@@ -378,6 +383,7 @@ update the numbers.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-15 | minor | Gap 3: #2517 a blank line at ordinary leading stays a paragraph break. Estimates unchanged. |
 | 2026-10-15 | minor | Gap 12: the text oracle scores reading order as well as word F1, which is a bag of words and cannot see order; the first measurement separated 18 improvements from 6 regressions in a change F1 called unchanged on 26 of 29 files. Estimates unchanged. |
 | 2026-10-15 | patch | Gap 24: record localization and installers as partial (unusable Chinese, Telugu and Arabic; unsigned Linux packages) |
 | 2026-10-13 | minor | Gap 6: Organize Pages selects and reveals the current page on open, including after an earlier grid selection elsewhere (#1910). Estimates unchanged. |
