@@ -2,7 +2,7 @@
 
 **Stage: alpha** · next: beta, ~25% (ready for real work 50% → 75%) and ~400–700 h away
 
-> **Last reviewed:** 2026-10-16 · **Last updated:** 2026-10-16 · **Change:** minor (M2 #2660: retain readable pages and content after unreadable array entries, with recovery warnings; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
+> **Last reviewed:** 2026-10-16 · **Last updated:** 2026-10-16 · **Change:** minor (M2 #2660: recover lexically accepted but unparseable array slots without panicking; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-13 · **Last updated:** 2026-10-14 · **Change:** minor (M14: the Italian catalog has every entry the other catalogs had and the code looks up; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-14 · **Last updated:** 2026-10-14 · **Change:** minor (M3 #2080 candidate: explicit search jumps join per-tab history; rail and control-channel Back/Forward; estimates unchanged)
 > **Last reviewed:** 2026-10-13 · **Last updated:** 2026-10-13 · **Change:** minor (M4 #1910: Organize Pages opens on the current page; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
@@ -157,6 +157,8 @@ Ranked; detail and the full milestone table in [docs/roadmap.md](docs/roadmap.md
 | 8 | 1.0 polish: performance, right-to-left, missing languages, keyboard-only (M14) | 55–95 |
 
 ## Progress log
+
+- **2026-10-16 (M2, #2660 review):** Resolved structural-array entries now advance over a complete syntactic slot before parsing it. A bare `+` accepted by validation is recorded and skipped without the raw-iterator panic, and partially parsed overflowing references cannot split into extra entries. Regressions cover both content readers, inspection, exact pixels, slot counts, valid signed numbers and first/middle/last positions. Positional arrays remain strict. Estimates unchanged.
 
 - **2026-10-16 (M2, #2660):** Refreshed PR #2683 on current main, retaining upstream renderer and signature updates. Rechecked scoped Rust/WebAssembly gates and the headless damaged-array replay. Recovery scope and estimates are unchanged.
 
@@ -499,6 +501,7 @@ Newest first: the date, what moved, and the new overall estimate.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-16 | minor | M2 #2660 review: consume and parse each structural-array slot within its own bounds; bare plus signs no longer reach the raw iterator panic. Direct-reader, inspection and pixel regressions. Estimates unchanged. |
 | 2026-10-16 | minor | M2 #2660: refresh array recovery on current main, preserve upstream renderer/signature changes, and rerun scoped tests, wasm and headless replay. Estimates unchanged. |
 | 2026-10-15 | minor | M2 #2660: recover later readable pages/content and report skipped array slots; synthetic parser/render regressions. Estimates unchanged. |
 | 2026-10-13 | minor | M9: separate page validation overlays preserve signature artwork, and snapshot tabs reuse instead of multiplying; baked captions remain unchanged (#79 open); estimates unchanged |
