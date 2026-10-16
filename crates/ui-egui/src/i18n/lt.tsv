@@ -2683,3 +2683,10 @@ key	Space	Tarpas
 	The password must have at least 6 characters.	Slaptažodį turi sudaryti bent 6 simboliai.
 	This file changed on disk. Reload it to see the new version; your unsaved changes will be lost.	Šis failas diske pasikeitė. Įkelkite jį iš naujo, kad pamatytumėte naują versiją; neįrašyti pakeitimai bus prarasti.
 theme	Appearance	Išvaizda
+
+# Notices passed to `notify_tr` / `notify_fmt` and Organize panel rows (added with the Czech review).
+	The image is marked for redaction. Apply it with Redact a PDF	Paveikslėlis pažymėtas šalinimui. Pritaikykite tai komanda „Pašalinti konfidencialią informaciją iš PDF“
+	Couldn't open {name}: the background worker stopped	Nepavyko atverti {name}: foninis procesas sustojo
+	Couldn't open {name}: {reason}	Nepavyko atverti {name}: {reason}
+	Page templates	Puslapių šablonai
+	Print pages	Spausdinti puslapius

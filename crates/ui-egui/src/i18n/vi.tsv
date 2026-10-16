@@ -2685,3 +2685,10 @@ key	Space	Space
 # Historical snapshot notice bar (View signed version / View revision).
 	You are viewing the signed version of “{from}” (revision {rev}). It is a snapshot: changes here won't affect the original.	Bạn đang xem phiên bản đã ký của “{from}” (bản sửa đổi {rev}). Đây là ảnh nhanh: các thay đổi ở đây không được áp dụng đến bản gốc.
 	You are viewing revision {rev} of “{from}”. It is a snapshot: changes here won't affect the original.	Bạn đang xem bản sửa đổi {rev} của “{from}”. Đây là ảnh nhanh: các thay đổi ở đây không được áp dụng đến bản gốc.
+
+# Notices passed to `notify_tr` / `notify_fmt` and Organize panel rows (added with the Czech review).
+	The image is marked for redaction. Apply it with Redact a PDF	Hình ảnh đã được đánh dấu để xóa. Áp dụng bằng lệnh Xóa nội dung nhạy cảm trong PDF
+	Couldn't open {name}: the background worker stopped	Không thể mở {name}: tiến trình nền đã dừng
+	Couldn't open {name}: {reason}	Không thể mở {name}: {reason}
+	Page templates	Mẫu trang
+	Print pages	In trang
