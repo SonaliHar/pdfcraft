@@ -354,6 +354,7 @@ impl Session {
                     pdfcraft_forms::detect::Kind::CheckBox => pdfcraft_forms::NewField::CheckBox,
                 },
                 name: Some(c.name.clone()),
+                look: None,
             });
             if let Some(props) = props {
                 edits.push(Edit::SetFieldProps { name: c.name, props: Box::new(props) });
