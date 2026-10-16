@@ -5176,6 +5176,7 @@ mod tests {
             timestamp_time: None,
             status: pdfcraft_engine::SignatureStatus::Valid,
             modification: pdfcraft_engine::sign::Modification::None,
+            verdict_shown: false,
             details: Vec::new(),
         }
     }
