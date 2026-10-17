@@ -5801,3 +5801,29 @@ fn cropping_an_existing_image_clips_it_and_moves_with_it() {
     // No area, or a box off the image, is refused.
     assert!(s.apply(id, Edit::EditPageImage { page: 0, index: 0, change: ImageEdit::Crop([10.0, 10.0, 10.0, 50.0]) }).is_err());
 }
+
+/// #2992: a page coloured with Edit a PDF ▸ Background exports to Word with that page colour,
+/// behind its text.
+#[test]
+fn exporting_to_word_keeps_the_page_background() {
+    let mut s = Session::new();
+    let text = s.create_from_text("t", "Blue text on teal").unwrap();
+    let id = s.open("t.pdf", None, text, None).unwrap();
+    assert_eq!(s.get(id).unwrap().export_pages()[0].background, None, "no background yet");
+    s.apply(
+        id,
+        Edit::AddBackground {
+            pages: vec![0],
+            settings: Background { color: [0.0, 0.5, 0.5], opacity: 1.0, ..Background::default() },
+            replace: false,
+            file: None,
+        },
+    )
+    .unwrap();
+    let d = s.get(id).unwrap();
+    let page = &d.export_pages()[0];
+    assert!(page.background.is_some_and(|c| c.iter().zip([0.0, 0.5, 0.5]).all(|(a, b)| (a - b).abs() < 1e-6)), "{:?}", page.background);
+    assert!(page.blocks.iter().any(|b| b.text.contains("Blue text")), "the text is still there");
+    let docx = d.export_office(compare::OfficeFormat::Docx);
+    assert!(docx.windows(b"word/settings.xml".len()).any(|w| w == b"word/settings.xml"), "Word is told to show the page colour");
+}
