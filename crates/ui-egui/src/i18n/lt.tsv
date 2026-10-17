@@ -2684,3 +2684,27 @@ key	Space	Tarpas
 	The password must have at least 6 characters.	Slaptažodį turi sudaryti bent 6 simboliai.
 	This file changed on disk. Reload it to see the new version; your unsaved changes will be lost.	Šis failas diske pasikeitė. Įkelkite jį iš naujo, kad pamatytumėte naują versiją; neįrašyti pakeitimai bus prarasti.
 theme	Appearance	Išvaizda
+
+# AI-assisted additions for Hindi catalog key parity (2026-10-17), not separately native-reviewed.
+	Automatic	Automatinis
+	Created	Sukurta
+	First page	Pirmasis puslapis
+	Go to page	Eiti į puslapį
+	Last page	Paskutinis puslapis
+	License	Licencija
+	Manual	Rankinis
+	Match case	Skirti didžiąsias ir mažąsias raides
+	Open in new window	Atverti naujame lange
+	Page {page}	Puslapis {page}
+	Page {page} of {total}	Puslapis {page} iš {total}
+	Privacy policy	Privatumo politika
+	Properties	Ypatybės
+	Replace all	Pakeisti viską
+	Report a problem	Pranešti apie problemą
+	Reset	Atkurti
+	Rotate left	Pasukti kairėn
+	Rotate right	Pasukti dešinėn
+	Search document	Ieškoti dokumente
+	Select none	Panaikinti pasirinkimą
+	Share	Bendrinti
+	Whole words	Tik ištisi žodžiai

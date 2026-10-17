@@ -164,3 +164,35 @@
 	Privacy policy	गोपनीयता नीति
 	License	लाइसेंस
 @plural	{n} page|{n} pages	{n} पृष्ठ|{n} पृष्ठ
+
+key	Ctrl	Ctrl
+key	Shift	Shift
+key	Delete	Delete
+key	Esc	Esc
+key	Home	Home
+key	End	End
+key	Space	स्पेस
+	Open this local PDF?	यह स्थानीय PDF खोलें?
+	This document is trying to open a local file:	यह दस्तावेज़ एक स्थानीय फ़ाइल खोलने का प्रयास कर रहा है:
+	Only allow this if you trust the source document.	केवल तभी अनुमति दें जब आपको स्रोत दस्तावेज़ पर भरोसा हो।
+	Allow	अनुमति दें
+	The labels are in English: the signature's font can't draw them in this language.	लेबल अंग्रेज़ी में हैं: हस्ताक्षर का फ़ॉन्ट उन्हें इस भाषा में नहीं दिखा सकता।
+	Digitally signed by	डिजिटल हस्ताक्षरकर्ता
+	DN: 	विशिष्ट नाम: 
+	Reason: 	कारण: 
+	Location: 	स्थान: 
+	Date: 	तारीख: 
+	Drag the selection to move it. Esc clears the selection.	चयन को खींचकर स्थानांतरित करें। Esc से चयन हट जाता है।
+	Shift-click to select several objects. Drag empty space to select an area.	एकाधिक ऑब्जेक्ट चुनने के लिए Shift दबाकर क्लिक करें। क्षेत्र चुनने के लिए खाली जगह में खींचें।
+	Select at most 1000 objects at a time.	एक बार में अधिकतम 1000 ऑब्जेक्ट चुनें।
+	Finish or discard the text being edited before selecting several objects.	एकाधिक ऑब्जेक्ट चुनने से पहले पाठ का संपादन पूरा करें या उसे छोड़ दें।
+	Move object	ऑब्जेक्ट स्थानांतरित करें
+	Move objects	ऑब्जेक्ट स्थानांतरित करें
+	Vertical text cannot be moved with this selection.	इस चयन के साथ लंबवत पाठ स्थानांतरित नहीं किया जा सकता।
+	Text used as a clipping path cannot be moved with this selection.	इस चयन के साथ क्लिपिंग पथ के रूप में प्रयुक्त पाठ स्थानांतरित नहीं किया जा सकता।
+	These objects could not be moved. Select them again and try a smaller move.	इन ऑब्जेक्ट को स्थानांतरित नहीं किया जा सका। उन्हें फिर से चुनें और कम दूरी तक खींचें।
+	This page contains objects that cannot be selected together.	इस पृष्ठ में ऐसे ऑब्जेक्ट हैं जिन्हें एक साथ नहीं चुना जा सकता।
+@plural	{n} object selected|{n} objects selected	{n} ऑब्जेक्ट चयनित|{n} ऑब्जेक्ट चयनित
+	Animation effects	एनिमेशन प्रभाव
+animation effects	On	चालू
+animation effects	Off	बंद

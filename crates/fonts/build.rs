@@ -57,8 +57,12 @@ fn craft_fonts(dir: &std::path::Path) -> Result<String, String> {
         let hebrew = scripts.split(',').any(|s| s.trim() == "Hebr");
         // Devanagari faces too, for the Hindi interface.
         let devanagari = scripts.split(',').any(|s| s.trim() == "Deva");
-        let web_face =
-            (*family == "BIZ UDPGothic" && *style == "Regular") || arabic || devanagari || telugu || hebrew || scripts.split(',').any(|s| s.trim() == "Thai");
+        let web_face = (*family == "BIZ UDPGothic" && *style == "Regular")
+            || arabic
+            || devanagari
+            || telugu
+            || hebrew
+            || scripts.split(',').any(|s| s.trim() == "Thai");
         if wasm && !web_face {
             continue;
         }

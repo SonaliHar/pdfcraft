@@ -193,9 +193,7 @@ pub static LANGUAGES: [LangInfo; 24] = [
         code: "te", name: "తెలుగు", source: include_str!("te.tsv"), plural: plural_one_other, rtl: false, catalog: OnceLock::new()
     },
     // Hindi; every `hi-*` locale (`hi-IN`) resolves here.
-    LangInfo {
-        code: "hi", name: "हिन्दी", source: include_str!("hi.tsv"), plural: plural_hi, rtl: false, catalog: OnceLock::new()
-    },
+    LangInfo { code: "hi", name: "हिन्दी", source: include_str!("hi.tsv"), plural: plural_hi, rtl: false, catalog: OnceLock::new() },
     // Hungarian; every `hu-*` locale (`hu-HU`) resolves here.
     LangInfo { code: "hu", name: "Magyar", source: include_str!("hu.tsv"), plural: plural_one_other, rtl: false, catalog: OnceLock::new() },
     // Ukrainian; every `uk-*` locale (`uk-UA`, `uk_UA.UTF-8`) resolves here.
