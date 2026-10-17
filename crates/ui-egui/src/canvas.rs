@@ -927,6 +927,11 @@ impl DocView {
         k
     }
 
+    /// The pages requested in the last render queue (diagnostics and tests).
+    pub fn queued_pages(&self) -> Vec<usize> {
+        self.last_queue.iter().map(|r| r.page).collect()
+    }
+
     /// Re-render every page and text layer (the document's appearance changed, e.g. a layer
     /// was toggled). Out-of-date rasters stay on screen until their replacements arrive, so the
     /// view never flashes blank.
@@ -1017,7 +1022,7 @@ impl DocView {
     }
 
     /// The whole-page raster on screen for `page` (the low-res backdrop of a tiled page), if any.
-    pub(crate) fn page_raster(&self, page: usize) -> Option<egui::TextureId> {
+    pub fn page_raster(&self, page: usize) -> Option<egui::TextureId> {
         self.pages.get(&page).map(|p| p.tex.id())
     }
 
@@ -2406,20 +2411,23 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
     // When not scrolling continuously, only one row is shown at a time: the current page, or the
     // current two-page spread (with the cover rule). These indices drive paging, which pages are
     // drawn, and the content height (#752). Empty for a document with no pages.
-    let row: Vec<usize> = if rects.is_empty() {
-        Vec::new()
-    } else {
-        let last = rects.len() - 1;
-        let cur = view.current.min(last);
-        match view.layout {
-            PageLayout::Single => vec![cur],
-            PageLayout::TwoUp if view.cover && cur == 0 => vec![0],
-            PageLayout::TwoUp => {
-                let first = if view.cover { cur - (cur + 1) % 2 } else { cur - cur % 2 };
-                if first < last { vec![first, first + 1] } else { vec![first] }
+    let shown_row = |view: &DocView| -> Vec<usize> {
+        if rects.is_empty() {
+            Vec::new()
+        } else {
+            let last = rects.len() - 1;
+            let cur = view.current.min(last);
+            match view.layout {
+                PageLayout::Single => vec![cur],
+                PageLayout::TwoUp if view.cover && cur == 0 => vec![0],
+                PageLayout::TwoUp => {
+                    let first = if view.cover { cur - (cur + 1) % 2 } else { cur - cur % 2 };
+                    if first < last { vec![first, first + 1] } else { vec![first] }
+                }
             }
         }
     };
+    let mut row = shown_row(view);
     let middle_gesture = view.auto_scroll.blocks_input();
     // Not scrolling: when the whole page or spread fits, the wheel would do nothing, so it turns
     // pages instead; zoomed in far enough to pan, it pans, and at the edge it turns the page on
@@ -2450,6 +2458,7 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
                 }
             }
         });
+        row = shown_row(view);
         if single_paging {
             // Paging owns vertical wheel motion here. A diagonal gesture keeps its sideways
             // part, as `ScrollArea` itself handles each axis.
@@ -2559,13 +2568,11 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
         let r = rects[page.min(rects.len() - 1)];
         let point = pos2(r.left() + fx * r.width(), r.top() - y_shift + fy * r.height());
         scroll = scroll.scroll_offset(vec2((point.x - rel.x).max(0.0), (point.y - rel.y).max(0.0)));
-    } else if edge_turned {
-        // The row above was laid out for the page before the turn: place the new one next frame.
-        ui.ctx().request_repaint();
     } else if let Some((page, frac)) = view.goto.take() {
         let page = page.min(rects.len() - 1);
         let r = rects[page];
-        scroll = scroll.vertical_scroll_offset((r.top() - y_shift - GAP + frac * r.height()).max(0.0));
+        let max_y = (content_h - avail.height()).max(0.0);
+        scroll = scroll.vertical_scroll_offset((r.top() - y_shift - GAP + frac * r.height()).max(0.0).min(max_y));
     }
     let ppp = ui.ctx().pixels_per_point();
     let scale = view.render_scale(ppp);
@@ -3608,6 +3615,22 @@ pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
     let pan_held = now_settle < view.pan_hold_until;
     let (mut wanted, visible_now) = out.inner;
     let cur = view.current;
+    if !view.continuous
+        && let (Some(&first), Some(&last)) = (visible_pages.first(), visible_pages.last())
+    {
+        let n = if view.layout == PageLayout::Single { 1 } else { 2 };
+        let max_side = ui.ctx().input(|inp| inp.max_texture_side) as f32;
+        for i in (last.saturating_add(1)..=last.saturating_add(n)).chain(first.saturating_sub(n)..first) {
+            let Some(p) = info.pages.get(i).filter(|_| !view.errors.contains_key(&i)) else { continue };
+            let side = p.width.max(p.height).max(1.0);
+            wanted.push(if side * scale > TILE_THRESHOLD.min(max_side) {
+                let bs = BASE_SIDE.min(max_side) / side;
+                (i, bs, scale_tag(bs), None)
+            } else {
+                (i, scale, tag, None)
+            });
+        }
+    }
     wanted.sort_by_key(|w| (!visible_now.contains(&w.0), w.0.abs_diff(cur), w.3.is_some()));
     // Tiles of far-away pages are useless: free them. Tiles of an earlier zoom stay for a page
     // that is on screen, whether or not the page is tiled at this zoom (#2196): a zoom out below
