@@ -3,6 +3,7 @@
 **Stage: alpha** · next: beta, ~25% (ready for real work 50% → 75%) and ~400–700 h away
 
 > **Last reviewed:** 2026-10-18 · **Last updated:** 2026-10-18 · **Change:** minor (M8, #1350: named replacement descriptions retired during Sanitize and across shared resources; estimates unchanged)
+> **Last reviewed:** 2026-10-17 · **Last updated:** 2026-10-17 · **Change:** minor (M6 native FFDetr engine/CLI integration; model distribution and default UI rollout remain pending) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-15 · **Last updated:** 2026-10-15 · **Change:** minor (M6: AcroForm XML text; estimates unchanged)
 > **Last reviewed:** 2026-10-15 · **Last updated:** 2026-10-15 · **Change:** minor (M2/gap 12: the Annex D.2 alias codes read as the ink they draw in both tables; the text oracle scores reading order; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-13 · **Last updated:** 2026-10-13 · **Change:** minor (M6: preserve XML/XFDF attribute whitespace; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
@@ -162,6 +163,8 @@ Ranked; detail and the full milestone table in [docs/roadmap.md](docs/roadmap.md
 
 ## Progress log
 - **2026-10-18 (M8, #1350):** Integrated current main while preserving content-stream comment boundaries. Hidden-text cleanup retires unused named replacement descriptions on rewritten pages and forms, including inherited/shared resource holders, without removing descriptions still used by surviving content. Synthetic saved-byte and preservation regressions cover the cleanup. Estimates unchanged.
+
+- **2026-10-17 (M6, native field detection):** First native FFDetr integration: local RTen inference, bounded and hash-verified model loading, cancellable snapshot jobs, stale-result rejection, transparent widgets, and explicit-model `form_detect_fields` CLI/MCP support with one inference pass per request. Synthetic end-to-end coverage includes preview, fill, save/reopen, undo/redo and confinement. Real-model CLI save/reopen and same-image comparison against CommonForms verified; native and WASM checks pass. No model binary or default GUI switch is shipped; distribution, UI workers and wider accuracy evaluation remain pending. Estimates unchanged.
 - **2026-10-15 (M6, AcroForm XML text):** Plain AcroForm XML imports retain all direct text around comments and processing instructions, including CDATA and character references. Synthetic regressions verify exact values and unknown catalog data after incremental and full save/reopen. Nested-element and XFA interpretation are unchanged. Estimates unchanged.
 - **2026-10-15 (M6, #1917 refresh):** Integrated upstream `99941daa` while retaining the XML/XFDF attribute whitespace correction and all upstream progress. Only independent documentation conflicts required resolution; focused production and test files are unchanged from the previously green CI head. Estimates unchanged.
 - **2026-10-15 (M1, #2267 refresh):** Integrated upstream `99941daa` while retaining the raw-deflate fallback correction and all upstream progress. Only independent documentation conflicts required resolution; focused production and test files are unchanged from the previously green CI head. Estimates unchanged.
@@ -506,6 +509,7 @@ Newest first: the date, what moved, and the new overall estimate.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-17 | minor | M6 native FFDetr engine and automation integration; explicit local model only. Default UI and model packaging remain pending; estimates unchanged. |
 | 2026-10-15 | minor | M6: Plain AcroForm XML imports retain all direct text around comments and processing instructions, including CDATA and character references. Estimates unchanged. |
 | 2026-10-13 | minor | M6: XML/XFDF attribute whitespace survives form and comment export/import; estimates unchanged |
 | 2026-10-14 | minor | M1: raw-deflate fallback preserves decoding-limit errors in strict and tolerant decoding; synthetic filter and COS stream regressions. Estimates unchanged. |
