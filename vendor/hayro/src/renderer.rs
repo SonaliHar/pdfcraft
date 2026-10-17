@@ -435,6 +435,13 @@ pub(crate) struct Renderer {
     /// PdfCraft patch (17): while the page's annotations are being drawn, paints keep their
     /// colours — reading colours replace document colours, never annotation colours.
     in_annotations: bool,
+    /// PdfCraft patch (19): one entry per transparency group pushed, whether it is a knockout
+    /// group (`Device::set_knockout`).
+    knockout: Vec<bool>,
+    /// PdfCraft patch (19): inside a knockout erase pass (`Device::begin_knockout_erase`), and
+    /// how many transparency groups were skipped in it (nothing is layered while erasing).
+    erasing: bool,
+    erase_groups: usize,
     pub(crate) inside_pattern: bool,
     /// Soft masks drawn during this render. PdfCraft note: it belongs to one `Renderer` (one
     /// render, every nested renderer starting empty) and so to one `preview` setting: a mask
@@ -458,6 +465,11 @@ enum ImagePixelFormat {
 }
 
 impl Renderer {
+    /// PdfCraft patch (19): whether the innermost transparency group is a knockout group.
+    fn in_knockout(&self) -> bool {
+        self.knockout.last().copied().unwrap_or(false)
+    }
+
     pub(crate) fn new(
         width: u16,
         height: u16,
@@ -470,6 +482,9 @@ impl Renderer {
             ctx: RenderContext::new_with(width, height, settings),
             color_replacement,
             in_annotations: false,
+            knockout: Vec::new(),
+            erasing: false,
+            erase_groups: 0,
             inside_pattern: false,
             soft_mask_cache: HashMap::default(),
             outline_cache: cache.outline_cache.clone(),
@@ -578,6 +593,9 @@ impl Renderer {
                 // original values, so it is never remapped by the reading-colours setting.
                 color_replacement: None,
                 in_annotations: false,
+                knockout: Vec::new(),
+                erasing: false,
+                erase_groups: 0,
                 inside_pattern: false,
                 soft_mask_cache: HashMap::default(),
                 outline_cache: self.outline_cache.clone(),
@@ -1047,6 +1065,13 @@ impl Renderer {
 
     #[must_use]
     fn set_paint(&mut self, paint: &Paint<'_>, path: &BezPath, is_stroke: bool) -> Option<BezPath> {
+        // PdfCraft patch (19): in a knockout erase pass every paint clears what is under its
+        // shape (a transparent fill with `Compose::Copy`, weighted by coverage).
+        if self.erasing {
+            self.ctx.set_blend_mode(knockout_blend_mode());
+            self.ctx.set_paint(AlphaColor::<Srgb>::new([0.0, 0.0, 0.0, 0.0]));
+            return None;
+        }
         let mut paint_transform = Affine::IDENTITY;
         let mut clip_path = None;
 
@@ -1165,6 +1190,9 @@ impl Renderer {
                             // content is never remapped by the reading-colours setting.
                             color_replacement: None,
                             in_annotations: false,
+                            knockout: Vec::new(),
+                            erasing: false,
+                            erase_groups: 0,
                             cur_mask: None,
                             inside_pattern: true,
                             soft_mask_cache: HashMap::default(),
@@ -1358,6 +1386,11 @@ impl Renderer {
 
 impl<'a> Device<'a> for Renderer {
     fn draw_image(&mut self, image: hayro_interpret::Image<'a, '_>, mut transform: Affine) {
+        // PdfCraft patch (19): an erase pass paints nothing; an unmasked image's rectangle was
+        // cleared by `knockout_shape`, and a masked image's shape is left alone.
+        if self.erasing {
+            return;
+        }
         // PdfCraft patch: see `may_paint_rect`. Checked before decoding: off-canvas images
         // cost nothing, so a tile no longer decodes every image on its page.
         if !may_paint_rect(
@@ -1481,6 +1514,9 @@ impl<'a> Device<'a> for Renderer {
                                         // the reading-colours setting.
                                         color_replacement: None,
                                         in_annotations: false,
+                                        knockout: Vec::new(),
+                                        erasing: false,
+                                        erase_groups: 0,
                                         inside_pattern: false,
                                         soft_mask_cache: HashMap::default(),
                                         outline_cache: self.outline_cache.clone(),
@@ -1553,6 +1589,11 @@ impl<'a> Device<'a> for Renderer {
         mask: Option<SoftMask<'_>>,
         blend_mode: BlendMode,
     ) {
+        // PdfCraft patch (19): nothing is layered in a knockout erase pass.
+        if self.erasing {
+            self.erase_groups += 1;
+            return;
+        }
         let settings = *self.ctx.render_settings();
         let force_images_may_have_transparency = mask.is_some()
             || blend_mode != BlendMode::Normal
@@ -1579,6 +1620,7 @@ impl<'a> Device<'a> for Renderer {
         );
         self.image_transparency_stack
             .push(force_images_may_have_transparency);
+        self.knockout.push(false);
     }
 
     fn pop_clip_path(&mut self) {
@@ -1586,8 +1628,63 @@ impl<'a> Device<'a> for Renderer {
     }
 
     fn pop_transparency_group(&mut self) {
+        if self.erasing && self.erase_groups > 0 {
+            self.erase_groups -= 1;
+            return;
+        }
         self.image_transparency_stack.pop();
+        self.knockout.pop();
         self.ctx.pop_layer();
+    }
+
+    /// PdfCraft patch (19): the group just pushed is a knockout group. Its elements are drawn
+    /// with `Compose::Copy`, which (weighted by coverage) replaces what earlier elements drew
+    /// where the element's shape is, so each element composites with the group's initial
+    /// backdrop (transparent: an isolated group, and the non-isolated approximation every
+    /// group layer here already makes) instead of with the elements before it. Against a
+    /// transparent backdrop the element's own blend mode has nothing to blend with, so the
+    /// mix is Normal. This covers paths, strokes, glyph outlines and shadings. Images and
+    /// nested groups are drawn into a layer of their own, which can't be copied (it covers the
+    /// whole canvas, transparent where nothing was drawn): what is under their shape is cleared
+    /// first (`knockout_shape`, the knockout erase pass) and the layer composites over it.
+    fn set_knockout(&mut self) {
+        if let Some(top) = self.knockout.last_mut() {
+            *top = true;
+            self.ctx.set_blend_mode(knockout_blend_mode());
+        }
+    }
+
+    /// PdfCraft patch (19): in a knockout group, clear what the group drew under `shape` (a
+    /// transparent fill with `Compose::Copy`, weighted by coverage) before an element drawn into
+    /// a layer of its own composites there, so the element replaces it.
+    fn knockout_erase_wanted(&mut self) -> bool {
+        self.in_knockout() && !self.erasing
+    }
+
+    fn begin_knockout_erase(&mut self) {
+        self.erasing = true;
+        self.erase_groups = 0;
+    }
+
+    fn end_knockout_erase(&mut self) {
+        self.erasing = false;
+        self.erase_groups = 0;
+        self.ctx.set_blend_mode(knockout_blend_mode());
+    }
+
+    fn knockout_shape(&mut self, shape: &BezPath) {
+        if !self.in_knockout() {
+            return;
+        }
+        let old_transform = *self.ctx.transform();
+        let old_rule = *self.ctx.fill_rule();
+        self.ctx.set_transform(Affine::IDENTITY);
+        self.ctx.set_fill_rule(Fill::NonZero);
+        self.ctx.set_blend_mode(knockout_blend_mode());
+        self.ctx.set_paint(AlphaColor::<Srgb>::new([0.0, 0.0, 0.0, 0.0]));
+        self.ctx.fill_path(shape);
+        self.ctx.set_fill_rule(old_rule);
+        self.ctx.set_transform(old_transform);
     }
 
     fn set_soft_mask(&mut self, mask: Option<SoftMask<'_>>) {
@@ -1693,7 +1790,13 @@ impl<'a> Device<'a> for Renderer {
     }
 
     fn set_blend_mode(&mut self, blend_mode: BlendMode) {
-        self.ctx.set_blend_mode(convert_blend_mode(blend_mode));
+        // PdfCraft patch (19): inside a knockout group every element replaces what it covers.
+        let mode = if self.in_knockout() {
+            knockout_blend_mode()
+        } else {
+            convert_blend_mode(blend_mode)
+        };
+        self.ctx.set_blend_mode(mode);
     }
 }
 
@@ -1777,6 +1880,9 @@ fn draw_soft_mask(mask: &SoftMask<'_>, settings: RenderSettings, width: u16, hei
         // content is never remapped by the reading-colours setting.
         color_replacement: None,
         in_annotations: false,
+        knockout: Vec::new(),
+        erasing: false,
+        erase_groups: 0,
         inside_pattern: false,
         cur_mask: None,
         soft_mask_cache: HashMap::default(),
@@ -1869,6 +1975,11 @@ fn convert_fill_rule(fill_rule: FillRule) -> Fill {
         FillRule::NonZero => Fill::NonZero,
         FillRule::EvenOdd => Fill::EvenOdd,
     }
+}
+
+/// PdfCraft patch (19): how an element of a knockout group is drawn (see `set_knockout`).
+fn knockout_blend_mode() -> peniko::BlendMode {
+    peniko::BlendMode::new(Mix::Normal, Compose::Copy)
 }
 
 fn convert_blend_mode(blend_mode: BlendMode) -> peniko::BlendMode {
