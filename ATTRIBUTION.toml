@@ -232,6 +232,17 @@ sha256 = "c805a2c6da08e77a9a7455856d82c168cf6f353d96e1dc140fcc8898f12ba538"
 
 
 [[asset]]
+path = "crates/ui-egui/src/i18n/ka.tsv"
+title = "Georgian interface translation catalog"
+author = "PdfCraft contributors"
+source = "Contributor-original: clean-room translations of PdfCraft's English UI labels, no proprietary localisation resources"
+licence = "MIT OR Apache-2.0"
+licence_file = "LICENSE-MIT"
+kind = "translation"
+usage = "Georgian UI strings, compiled in by crates/ui-egui/src/i18n/mod.rs"
+sha256 = "bfd9a2f646e526a6cb1eac414c9219bbc5fbe2107775006137fb38f0b2138dd4"
+
+[[asset]]
 path = "assets/icons/accessibility.svg"
 title = "Lucide icon \"accessibility\""
 author = "Lucide Contributors (portions Cole Bemis, Feather)"
