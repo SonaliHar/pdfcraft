@@ -1,5 +1,7 @@
 # PdfCraft roadmap
 
+> **Last updated:** 2026-10-17 · **Change:** minor (Hindi starter catalog review fixes and rebase; no rendering-coverage claim).
+
 **Stage: alpha** · next: beta, ~25% (ready for real work 50% → 75%) and ~400–700 h away
 
 > **Last reviewed:** 2026-10-15 · **Last updated:** 2026-10-15 · **Change:** minor (M6: AcroForm XML text; estimates unchanged)
@@ -129,7 +131,7 @@ union). Detail and script notes: [localization-parity.md](docs/localization-pari
 | English | `en` | 100% | full |
 | Simplified Chinese | `zh-hans` | 97.4% | partial (no Hans UI face in releases, #826) |
 | Spanish | `es` | 95.5% | partial |
-| Hindi | `hi` | 0% | none |
+| Hindi | `hi` | 182 starter labels | partial (no Devanagari face in CI/release input) |
 | Arabic | `ar` | 100% | partial (layout not mirrored) |
 | French | `fr` | 99.3% | partial |
 | Portuguese (Brazil) | `pt-br` | 99.4% | partial |
@@ -141,7 +143,7 @@ union). Detail and script notes: [localization-parity.md](docs/localization-pari
 
 Also shipped: Traditional Chinese, Russian, Bulgarian, Telugu, Hungarian, Ukrainian, Italian,
 Kazakh, Polish, Slovenian, Greek, Turkish, Lithuanian and Czech (menus only): **14 more catalogs**
-(23 interface languages including English).
+(24 interface languages including English).
 
 ## Upcoming
 
@@ -160,6 +162,7 @@ Ranked; detail and the full milestone table in [docs/roadmap.md](docs/roadmap.md
 | 8 | 1.0 polish: performance, right-to-left, missing languages, keyboard-only (M14) | 55–95 |
 
 ## Progress log
+- **2026-10-17 (M14, Hindi review):** Rebased the Hindi starter catalog onto current main, preserving the other languages and script fallbacks. Both missing function braces are restored. Hindi has 182 entries, CLDR integer plurals and date names; required consent, signature, selection, animation and key labels are included. Lithuanian and Vietnamese cover the starter catalog's additional keys; those additions are AI-assisted, not separately native-reviewed. The CI/release craft-fonts revision has no Devanagari face, so the glyph test skips and does not prove rendering coverage. Estimates unchanged.
 - **2026-10-15 (M6, AcroForm XML text):** Plain AcroForm XML imports retain all direct text around comments and processing instructions, including CDATA and character references. Synthetic regressions verify exact values and unknown catalog data after incremental and full save/reopen. Nested-element and XFA interpretation are unchanged. Estimates unchanged.
 - **2026-10-15 (M6, #1917 refresh):** Integrated upstream `99941daa` while retaining the XML/XFDF attribute whitespace correction and all upstream progress. Only independent documentation conflicts required resolution; focused production and test files are unchanged from the previously green CI head. Estimates unchanged.
 - **2026-10-15 (M1, #2267 refresh):** Integrated upstream `99941daa` while retaining the raw-deflate fallback correction and all upstream progress. Only independent documentation conflicts required resolution; focused production and test files are unchanged from the previously green CI head. Estimates unchanged.
