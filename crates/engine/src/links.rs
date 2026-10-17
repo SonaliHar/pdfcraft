@@ -2,7 +2,7 @@
 //! About dialog, the home screen, the CLI and the README agree.
 
 use icu_properties::props::Script;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 /// The app's name in ArtCraft URLs (`getartcraft.com/apps/{APP}`, `github.com/storytold/{APP}`).
 pub const APP: &str = "pdfcraft";
@@ -174,6 +174,8 @@ pub fn remote_document_path_is_absolute(raw: &str) -> bool {
 
 /// Resolve a PDF remote-Go-To file specification to a local path without opening it.
 /// Relative paths are based on the source document; an in-memory source has no fallback to CWD.
+/// They are resolved lexically (`.` and `..` folded without touching the disk), so the path a
+/// caller shows for approval is the one that gets read.
 pub fn resolve_remote_document_path(source: Option<&Path>, raw: &str) -> Result<PathBuf, RemoteDocumentPathError> {
     if raw.is_empty() || raw.trim().is_empty() {
         return Err(RemoteDocumentPathError::Empty);
@@ -202,7 +204,23 @@ pub fn resolve_remote_document_path(source: Option<&Path>, raw: &str) -> Result<
     }
     let source = source.ok_or(RemoteDocumentPathError::MissingSourcePath)?;
     let parent = source.parent().ok_or(RemoteDocumentPathError::MissingSourcePath)?;
-    Ok(parent.join(path))
+    let mut resolved = parent.to_path_buf();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => match resolved.components().next_back() {
+                Some(Component::Normal(_)) => {
+                    resolved.pop();
+                }
+                // `..` above a root stays at the root, as the file system reads it.
+                Some(Component::RootDir | Component::Prefix(_)) => {}
+                // A relative source folder with nothing left to fold keeps the `..`.
+                Some(Component::CurDir | Component::ParentDir) | None => resolved.push(component),
+            },
+            other => resolved.push(other),
+        }
+    }
+    Ok(resolved)
 }
 
 /// Largest linked PDF a GoToR link may open (1 GiB, the largest size the large-file work measures).
@@ -504,7 +522,7 @@ mod tests {
         use std::path::Path;
 
         let source = Path::new("/docs/chapter/source.pdf");
-        assert_eq!(resolve(Some(source), "../target.pdf").as_deref(), Ok(Path::new("/docs/chapter/../target.pdf")));
+        assert_eq!(resolve(Some(source), "../target.pdf").as_deref(), Ok(Path::new("/docs/target.pdf")));
         assert_eq!(resolve(Some(source), "/manual/target.pdf").as_deref(), Ok(Path::new("/manual/target.pdf")));
         assert_eq!(resolve(None, "target.pdf"), Err(E::MissingSourcePath));
         assert_eq!(resolve(Some(source), ""), Err(E::Empty));
@@ -518,6 +536,26 @@ mod tests {
         }
         assert_eq!(resolve(Some(source), "folder/hidden\u{200B}.pdf"), Err(E::Hidden));
         assert_eq!(resolve(Some(source), &"a".repeat(super::MAX_REMOTE_DOCUMENT_PATH_BYTES + 1)), Err(E::TooLong));
+    }
+
+    #[test]
+    fn relative_remote_document_paths_are_resolved_lexically() {
+        use super::resolve_remote_document_path as resolve;
+        use std::path::Path;
+
+        let source = Path::new("/docs/chapter/source.pdf");
+        for (raw, resolved) in [
+            ("sub/target.pdf", "/docs/chapter/sub/target.pdf"),
+            ("./sub/./target.pdf", "/docs/chapter/sub/target.pdf"),
+            ("sub/../target.pdf", "/docs/chapter/target.pdf"),
+            ("sub/../../appendix/target.pdf", "/docs/appendix/target.pdf"),
+            ("../../../../target.pdf", "/target.pdf"),
+        ] {
+            assert_eq!(resolve(Some(source), raw).as_deref(), Ok(Path::new(resolved)), "{raw}");
+        }
+        // A relative source path keeps the `..` it can't fold, rather than dropping it.
+        assert_eq!(resolve(Some(Path::new("source.pdf")), "../target.pdf").as_deref(), Ok(Path::new("../target.pdf")));
+        assert_eq!(resolve(Some(Path::new("docs/source.pdf")), "../../target.pdf").as_deref(), Ok(Path::new("../target.pdf")));
     }
 
     #[test]
