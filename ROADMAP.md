@@ -135,7 +135,7 @@ union). Detail and script notes: [localization-parity.md](docs/localization-pari
 | Indonesian | `id` | 0% | none |
 | Japanese | `ja` | 99.1% | partial |
 | German | `de` | 99.3% | partial |
-| Korean | `ko` | 0% | none |
+| Korean | `ko` | 100% of current union | partial (AI-drafted, one reviewer; no help) |
 | Vietnamese | `vi` | 100% of current union | partial (dialogs / tooltips; no help) |
 
 Also shipped: Traditional Chinese, Russian, Bulgarian, Telugu, Hungarian, Ukrainian, Italian,
@@ -495,6 +495,7 @@ Newest first: the date, what moved, and the new overall estimate.
 
 - M13: common command, batch, inspection and bounded preview tools share the existing confined automation path. MCP tools carry complete hints and reject unknown top-level keys as invalid parameters.
 - **2026-10-10 (UI docking):** Tools and Inspector can be regrouped, split beside the PDF, or floated inside the app window. Existing toggles reopen panels at their saved locations; UI commands arrange/reset panels, and preferences retain their layout. Read/full-screen modes preserve the focused document view. No milestone percentage change.
+- **2026-10-15 (Korean):** Korean interface catalog, Nanum Gothic UI font, installed-font fallback and Hangul text written into PDFs (Add text, replaced lines; Type 3 from craft-fonts). Reviewed by a Korean-speaking contributor with Google Gemini (55 edits: Redact→민감 정보 지우기, Sanitize→보안 정리, Flatten→병합, Output intent→출력 조건). No milestone percentage change.
 
 ## Revision history
 
