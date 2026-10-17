@@ -25,6 +25,8 @@ pub const MAC_CONTENT_LEFT: f32 = MAC_LIGHTS_LEFT + 2.0 * MAC_LIGHT_PITCH + MAC_
 const TAB_STRIP: f32 = 38.0;
 const TAB_HEIGHT: f32 = 30.0;
 const STRIP_BUTTON: f32 = 28.0;
+const RAIL_WIDTH: f32 = 48.0;
+const TOUCH_RAIL_WIDTH: f32 = 60.0;
 
 pub fn tab_strip(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
@@ -633,15 +635,19 @@ pub fn right_rail(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
     );
     let page_count = doc.info.pages.len();
     let labels: Vec<String> = doc.info.pages.iter().map(|p| p.label.clone()).collect();
+    let touch_controls = app.touch_controls;
+    let rail_button = if touch_controls { 44.0 } else { 34.0 };
+    let navigation_button = if touch_controls { 44.0 } else { 32.0 };
+    let page_button = if touch_controls { 44.0 } else { 30.0 };
     egui::Panel::right("rail")
         .resizable(false)
-        .exact_size(48.0)
+        .exact_size(if touch_controls { TOUCH_RAIL_WIDTH } else { RAIL_WIDTH })
         .frame(egui::Frame::NONE.fill(t.chrome).inner_margin(egui::Margin::symmetric(6, 8)).stroke(Stroke::new(1.0, t.divider)))
         .show(ui, |ui| {
             ui.spacing_mut().item_spacing.y = 4.0;
             let mut rail_button = |ui: &mut egui::Ui, panel: RightPanel, icon: &str, tip: &str, has: bool| {
                 let selected = app.right == Some(panel) && (app.mode == Mode::Read || app.docking.exposed(crate::docking::Panel::Inspector));
-                let r = icons::button(ui, icon, 34.0, selected, tl!(tip));
+                let r = icons::button(ui, icon, rail_button, selected, tl!(tip));
                 if has && !selected {
                     let c = r.rect.right_top() + vec2(-8.0, 8.0);
                     ui.painter().circle_filled(c, 3.0, t.accent);
@@ -668,16 +674,16 @@ pub fn right_rail(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
             ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
                 ui.spacing_mut().item_spacing.y = 2.0;
                 let tip = crate::commands::key_tip(ui.ctx(), tl!("Zoom out ({key})"), crate::commands::ZOOM_OUT);
-                if icons::button(ui, "zoom-out", 32.0, false, &tip).clicked() {
+                if icons::button(ui, "zoom-out", navigation_button, false, &tip).clicked() {
                     view.zoom_step(false);
                 }
                 let tip = crate::commands::key_tip(ui.ctx(), tl!("Zoom in ({key})"), crate::commands::ZOOM_IN);
-                if icons::button(ui, "zoom-in", 32.0, false, &tip).clicked() {
+                if icons::button(ui, "zoom-in", navigation_button, false, &tip).clicked() {
                     view.zoom_step(true);
                 }
                 // Between rotate and zoom, as in Acrobat. Its command runs once `view` is free.
                 let tip = crate::i18n::fmt(tl!("Page display: {layout}"), &[("layout", tl!(view.layout.label()))]);
-                let resp = icons::button(ui, view.layout.icon(), 32.0, false, &tip);
+                let resp = icons::button(ui, view.layout.icon(), navigation_button, false, &tip);
                 page_display = egui::Popup::menu(&resp)
                     .show(|ui| {
                         ui.set_min_width(220.0);
@@ -685,24 +691,25 @@ pub fn right_rail(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                     })
                     .and_then(|r| r.inner);
                 let tip = crate::commands::key_tip(ui.ctx(), tl!("Rotate view clockwise ({key})"), crate::commands::ROTATE_CW);
-                if icons::button(ui, "rotate-cw", 32.0, false, &tip).clicked() {
+                if icons::button(ui, "rotate-cw", navigation_button, false, &tip).clicked() {
                     view.rotate_view(true);
                 }
                 // Not `columns-2` while fitting the page: that is the two-page view's icon.
                 let fit_icon = if view.fit == Fit::Width { "maximize" } else { "maximize-2" };
-                if icons::button(ui, fit_icon, 32.0, false, tl!("Toggle fit page / fit width")).clicked() {
+                if icons::button(ui, fit_icon, navigation_button, false, tl!("Toggle fit page / fit width")).clicked() {
                     view.fit = if view.fit == Fit::Width { Fit::Page } else { Fit::Width };
                     view.goto = Some((view.current, 0.0));
                 }
                 let zoom = format!("{:.0}%", view.zoom * 100.0);
-                ui.allocate_ui_with_layout(vec2(40.0, 16.0), Layout::top_down(Align::Center), |ui| {
+                let page_editor_size = if touch_controls { vec2(48.0, 34.0) } else { vec2(40.0, 16.0) };
+                ui.allocate_ui_with_layout(page_editor_size, Layout::top_down(Align::Center), |ui| {
                     ui.label(egui::RichText::new(zoom).font(theme::medium(11.0)).color(t.text_muted));
                 });
                 ui.add_space(6.0);
-                if icons::button(ui, "chevron-down", 30.0, false, tl!("Next page")).clicked() {
+                if icons::button(ui, "chevron-down", page_button, false, tl!("Next page")).clicked() {
                     view.step_page(true);
                 }
-                if icons::button(ui, "chevron-up", 30.0, false, tl!("Previous page")).clicked() {
+                if icons::button(ui, "chevron-up", page_button, false, tl!("Previous page")).clicked() {
                     view.step_page(false);
                 }
                 // History is distinct from stepping to the adjacent page, and belongs to this tab.
@@ -711,7 +718,7 @@ pub fn right_rail(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                     (false, "chevron-left", tl!("Previous view"), crate::commands::PREV_VIEW, !view.back.is_empty()),
                 ] {
                     let tip = format!("{label} ({})", crate::commands::shortcut_label(ui.ctx(), shortcut));
-                    if ui.add_enabled_ui(enabled, |ui| icons::button(ui, icon, 30.0, false, &tip)).inner.clicked() {
+                    if ui.add_enabled_ui(enabled, |ui| icons::button(ui, icon, page_button, false, &tip)).inner.clicked() {
                         view.view_history(forward);
                     }
                 }
@@ -731,10 +738,10 @@ pub fn right_rail(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                 }
                 let edit = egui::TextEdit::singleline(&mut view.page_input)
                     .id(page_input_id)
-                    .desired_width(34.0)
+                    .desired_width(if touch_controls { 40.0 } else { 34.0 })
                     .horizontal_align(Align::Center)
                     .font(theme::medium(12.0))
-                    .margin(vec2(2.0, 4.0));
+                    .margin(vec2(2.0, if touch_controls { 8.0 } else { 4.0 }));
                 let r = egui::Frame::NONE
                     .fill(t.field)
                     .stroke(Stroke::new(1.0, t.border))

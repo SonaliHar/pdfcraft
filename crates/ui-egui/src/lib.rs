@@ -485,6 +485,8 @@ pub struct PdfCraftApp {
     pub(crate) pending_panel_reveals: Vec<docking::Panel>,
     pub session: Session,
     pub views: Vec<DocView>,
+    /// Touch-capable devices keep the navigation rail in its larger-target layout for this session.
+    pub(crate) touch_controls: bool,
     pub(crate) closed_tabs: Vec<String>,
     /// `None` shows the Home tab.
     pub active: Option<usize>,
@@ -886,6 +888,7 @@ impl PdfCraftApp {
         Self {
             session: Session::new(),
             views: Vec::new(),
+            touch_controls: false,
             closed_tabs: Vec::new(),
             active: None,
             mode: Mode::AllTools,
@@ -2916,6 +2919,7 @@ impl eframe::App for PdfCraftApp {
 
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.ctx = Some(ctx.clone());
+        self.touch_controls |= ctx.input(|i| i.events.iter().any(|event| matches!(event, egui::Event::Touch { .. })));
         self.dialog_epoch();
         // Notices raised outside `ui` (opened files, OS events, the control channel) translate too.
         let lang = i18n::Lang::from_pref(&self.language);
