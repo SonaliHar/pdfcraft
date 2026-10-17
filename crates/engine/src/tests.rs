@@ -70,6 +70,7 @@ fn custom_image_stamp_keeps_displayed_orientation_on_rotated_pages() {
                     name: "Original quadrants".into(),
                     file: MarkFile { name: "quadrants.png".into(), bytes: bytes.clone(), page: 0 },
                     author: "Test".into(),
+                    line: None,
                 },
             )
             .unwrap();
@@ -311,6 +312,7 @@ fn explicit_image_stamps_keep_displayed_orientation_on_rotated_pages() {
                     name: "Original quadrants".into(),
                     file: MarkFile { name: "quadrants.png".into(), bytes: bytes.clone(), page: 0 },
                     author: "Test".into(),
+                    line: None,
                 },
             )
             .unwrap();
@@ -338,6 +340,7 @@ fn pdf_page_stamps_keep_displayed_orientation_on_rotated_pages() {
                     name: "Half red".into(),
                     file: MarkFile { name: "half.pdf".into(), bytes: bytes.clone(), page: 0 },
                     author: "Test".into(),
+                    line: None,
                 },
             )
             .unwrap();
@@ -5800,4 +5803,42 @@ fn cropping_an_existing_image_clips_it_and_moves_with_it() {
     assert!(v.iter().zip(shown.iter()).all(|(a, b)| (a - b).abs() < 0.01), "{v:?} vs {shown:?}");
     // No area, or a box off the image, is refused.
     assert!(s.apply(id, Edit::EditPageImage { page: 0, index: 0, change: ImageEdit::Crop([10.0, 10.0, 10.0, 50.0]) }).is_err());
+}
+
+/// A custom stamp's line template (#1741) fills in the author, date and time as the dynamic
+/// stamps write them, and the "By" line itself is unchanged.
+#[test]
+fn stamp_lines_fill_in_the_name_date_and_time() {
+    let s = Session::new().with_clock(|| 1_700_000_000);
+    assert_eq!(s.stamp_line("Received {date} {time} by {name}", " Ada "), "Received Nov 14, 2023 10:13 pm by Ada");
+    assert_eq!(s.stamp_by_line("Ada"), "By Ada at 10:13 pm, Nov 14, 2023");
+    assert_eq!(s.stamp_by_line(""), "at 10:13 pm, Nov 14, 2023");
+    assert_eq!(s.stamp_line(&"{date}".repeat(100), "Ada").chars().count(), MAX_STAMP_LINE);
+}
+
+/// A custom stamp's line keeps Western European letters (#1741): the appearance holds them as
+/// WinAnsi bytes. A lossy UTF-8 round trip once turned them into replacement characters.
+#[test]
+fn a_custom_stamp_line_keeps_accented_letters() {
+    let image = image::RgbaImage::from_pixel(80, 40, image::Rgba([20, 120, 220, 255]));
+    let mut png = std::io::Cursor::new(Vec::new());
+    image.write_to(&mut png, image::ImageFormat::Png).unwrap();
+    let (mut session, id) = session_with(1);
+    let edit = Edit::AddCustomStamp {
+        page: 0,
+        rect: [100.0, 100.0, 100.0, 100.0],
+        name: "Logo".into(),
+        file: MarkFile { name: "logo.png".into(), bytes: Arc::new(png.into_inner()), page: 0 },
+        author: "Zoë".into(),
+        line: Some(session.stamp_line("Reçu à Zürich par {name}", "Zoë")),
+    };
+    session.apply(id, edit).unwrap();
+    let saved = session.save_bytes(id).unwrap();
+    let doc = pdfcraft_cos::Document::open(saved).unwrap();
+    const WANT: &[u8] = b"(Re\xe7u \xe0 Z\xfcrich par Zo\xeb)";
+    let found = doc.scan_objects().any(|(_, o)| match o.as_ref() {
+        pdfcraft_cos::Object::Stream(st) => st.decoded().is_ok_and(|b| b.windows(WANT.len()).any(|w| w == WANT)),
+        _ => false,
+    });
+    assert!(found, "the line's letters are WinAnsi bytes in the appearance");
 }
