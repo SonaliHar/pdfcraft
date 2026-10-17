@@ -179,6 +179,7 @@ M2 (renderer), M7 (content editing), M10 (OCR and Office), M11 (Preflight and st
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-17 | minor | M2 #2908: per-glyph fallback for non-embedded simple fonts using approved existing faces, with four-font Cyrillic, placement and malformed-encoding regressions. Exact family/style fidelity and uncovered scripts remain limited. Estimates unchanged. |
 | 2026-10-15 | minor | M9 #1895: generic appearance rewriting deferred; separate validation overlays preserve original artwork, exports and printing. Baked captions remain unchanged (#79 open). Estimates unchanged. |
 | 2026-10-12 | minor | M6: valid AcroForm XML element names with original PDF field names preserved; saved-PDF collision and Unicode regressions. Estimates unchanged. |
 | 2026-10-12 | minor | M6: preserve carriage returns in exported CSV field names and values; saved-PDF round-trip coverage. Estimates unchanged. |
