@@ -161,6 +161,8 @@ Ranked; detail and the full milestone table in [docs/roadmap.md](docs/roadmap.md
 | 8 | 1.0 polish: performance, right-to-left, missing languages, keyboard-only (M14) | 55–95 |
 
 ## Progress log
+
+- **2026-10-18 (M2, #2929):** Pin leading-superscript segment height and baseline separately from the selection highlight, which includes the raised marker. Regression assertions distinguish the body band from a union pulled upward by the marker; estimates unchanged.
 - **2026-10-18 (M8, #1350):** Integrated current main while preserving content-stream comment boundaries. Hidden-text cleanup retires unused named replacement descriptions on rewritten pages and forms, including inherited/shared resource holders, without removing descriptions still used by surviving content. Synthetic saved-byte and preservation regressions cover the cleanup. Estimates unchanged.
 - **2026-10-15 (M6, AcroForm XML text):** Plain AcroForm XML imports retain all direct text around comments and processing instructions, including CDATA and character references. Synthetic regressions verify exact values and unknown catalog data after incremental and full save/reopen. Nested-element and XFA interpretation are unchanged. Estimates unchanged.
 - **2026-10-15 (M6, #1917 refresh):** Integrated upstream `99941daa` while retaining the XML/XFDF attribute whitespace correction and all upstream progress. Only independent documentation conflicts required resolution; focused production and test files are unchanged from the previously green CI head. Estimates unchanged.
