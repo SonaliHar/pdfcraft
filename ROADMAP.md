@@ -161,6 +161,9 @@ Ranked; detail and the full milestone table in [docs/roadmap.md](docs/roadmap.md
 | 8 | 1.0 polish: performance, right-to-left, missing languages, keyboard-only (M14) | 55–95 |
 
 ## Progress log
+- **2026-10-18 (M2, PR #2838 refresh):** Integrated upstream `d8b27058` while preserving CropBox text clipping, rotated/UserUnit and ActualText coverage, the CLI regression and the asynchronous OS-open fixture fix. Estimates unchanged.
+
+- **2026-10-16 (M3, PR #2838 CI):** The OS-open regression keeps its synthetic file until asynchronous preparation opens its tab, then verifies the original one-tab, filename and quit behavior. A controlled worker delay reproduced the old zero-tab failure. CropBox behavior and estimates unchanged.
 - **2026-10-18 (M8, #1350):** Integrated current main while preserving content-stream comment boundaries. Hidden-text cleanup retires unused named replacement descriptions on rewritten pages and forms, including inherited/shared resource holders, without removing descriptions still used by surviving content. Synthetic saved-byte and preservation regressions cover the cleanup. Estimates unchanged.
 - **2026-10-15 (M6, AcroForm XML text):** Plain AcroForm XML imports retain all direct text around comments and processing instructions, including CDATA and character references. Synthetic regressions verify exact values and unknown catalog data after incremental and full save/reopen. Nested-element and XFA interpretation are unchanged. Estimates unchanged.
 - **2026-10-15 (M6, #1917 refresh):** Integrated upstream `99941daa` while retaining the XML/XFDF attribute whitespace correction and all upstream progress. Only independent documentation conflicts required resolution; focused production and test files are unchanged from the previously green CI head. Estimates unchanged.
