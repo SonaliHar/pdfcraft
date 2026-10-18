@@ -2,8 +2,9 @@
 
 **Stage: alpha** · next: beta, ~25% (ready for real work 50% → 75%) and ~400–700 h away
 
+> **Last reviewed:** 2026-10-18 · **Last updated:** 2026-10-18 · **Change:** patch (M6 FFDetr rebased onto upstream `d8b27058`; independent roadmap updates preserved; estimates unchanged)
 > **Last reviewed:** 2026-10-18 · **Last updated:** 2026-10-18 · **Change:** minor (M8, #1350: named replacement descriptions retired during Sanitize and across shared resources; estimates unchanged)
-> **Last reviewed:** 2026-10-17 · **Last updated:** 2026-10-17 · **Change:** patch (M6 FFDetr rebased onto the 0.9.0 workspace; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
+> **Last reviewed:** 2026-10-17 · **Last updated:** 2026-10-17 · **Change:** patch (M6 detection modal input, duplicate filtering and offline notice repair; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-15 · **Last updated:** 2026-10-15 · **Change:** minor (M6: AcroForm XML text; estimates unchanged)
 > **Last reviewed:** 2026-10-15 · **Last updated:** 2026-10-15 · **Change:** minor (M2/gap 12: the Annex D.2 alias codes read as the ink they draw in both tables; the text oracle scores reading order; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-13 · **Last updated:** 2026-10-13 · **Change:** minor (M6: preserve XML/XFDF attribute whitespace; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
@@ -162,7 +163,11 @@ Ranked; detail and the full milestone table in [docs/roadmap.md](docs/roadmap.md
 | 8 | 1.0 polish: performance, right-to-left, missing languages, keyboard-only (M14) | 55–95 |
 
 ## Progress log
+
+- **2026-10-18 (M6, PR #3105 refresh):** Rebased FFDetr detection onto upstream `d8b27058`. Resolved only roadmap conflicts, preserving the M8 updates and all FFDetr progress. The complete non-roadmap PR diff is unchanged from the previous branch. Estimates unchanged.
 - **2026-10-18 (M8, #1350):** Integrated current main while preserving content-stream comment boundaries. Hidden-text cleanup retires unused named replacement descriptions on rewritten pages and forms, including inherited/shared resource holders, without removing descriptions still used by surviving content. Synthetic saved-byte and preservation regressions cover the cleanup. Estimates unchanged.
+
+- **2026-10-17 (M6, review fixes):** Detection dialogs block document shortcuts and canvas input. Escape and Cancel release input while cancelled workers finish. Duplicate filtering requires coverage of both rectangles, and explicit installation repairs missing or incorrect notices offline without rewriting correct files. Regressions failed before the fixes. All 495 scoped tests passed, with one ignored. Clippy, WASM, attribution, layering and parity checks passed. Rebased onto upstream `12fcc641`; estimates unchanged.
 
 - **2026-10-17 (M6, 0.9.0 rebase):** Rebased FFDetr detection onto upstream `645016ad`. Kept the 0.9.0 workspace versions and updated the new detector dependency and lockfile entry to match. Estimates unchanged.
 
@@ -515,6 +520,7 @@ Newest first: the date, what moved, and the new overall estimate.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-17 | patch | M6: fix detection dialog input, distinct overlapping fields and offline licence notice repair. Estimates unchanged. |
 | 2026-10-17 | patch | M6: rebase FFDetr onto upstream 0.9.0 and retain the workspace version bump. Estimates unchanged. |
 | 2026-10-17 | patch | M6: align the detection bar with the displayed page; regression covers the last page at full width. Estimates unchanged. |
 | 2026-10-17 | minor | M6 desktop first-use model download and background FFDetr detection; separate public model release pending, estimates unchanged. |

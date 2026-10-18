@@ -1922,6 +1922,7 @@ impl PdfCraftApp {
     /// on the document underneath it.
     pub(crate) fn modal_open(&self) -> bool {
         self.dialog.is_some()
+            || self.form_detection.is_open()
             || self.close_request.is_some()
             || self.password_prompt.is_some()
             || self.unlock_prompt.is_some()
