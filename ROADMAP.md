@@ -2,7 +2,9 @@
 
 **Stage: alpha** · next: beta, ~25% (ready for real work 50% → 75%) and ~400–700 h away
 
+> **Last reviewed:** 2026-10-18 · **Last updated:** 2026-10-18 · **Change:** patch (M6 FFDetr rebased onto upstream `d8b27058`; independent roadmap updates preserved; estimates unchanged)
 > **Last reviewed:** 2026-10-18 · **Last updated:** 2026-10-18 · **Change:** minor (M8, #1350: named replacement descriptions retired during Sanitize and across shared resources; estimates unchanged)
+> **Last reviewed:** 2026-10-17 · **Last updated:** 2026-10-17 · **Change:** patch (M6 detection modal input, duplicate filtering and offline notice repair; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-15 · **Last updated:** 2026-10-15 · **Change:** minor (M6: AcroForm XML text; estimates unchanged)
 > **Last reviewed:** 2026-10-15 · **Last updated:** 2026-10-15 · **Change:** minor (M2/gap 12: the Annex D.2 alias codes read as the ink they draw in both tables; the text oracle scores reading order; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-13 · **Last updated:** 2026-10-13 · **Change:** minor (M6: preserve XML/XFDF attribute whitespace; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
@@ -161,7 +163,19 @@ Ranked; detail and the full milestone table in [docs/roadmap.md](docs/roadmap.md
 | 8 | 1.0 polish: performance, right-to-left, missing languages, keyboard-only (M14) | 55–95 |
 
 ## Progress log
+
+- **2026-10-18 (M6, PR #3105 refresh):** Rebased FFDetr detection onto upstream `d8b27058`. Resolved only roadmap conflicts, preserving the M8 updates and all FFDetr progress. The complete non-roadmap PR diff is unchanged from the previous branch. Estimates unchanged.
 - **2026-10-18 (M8, #1350):** Integrated current main while preserving content-stream comment boundaries. Hidden-text cleanup retires unused named replacement descriptions on rewritten pages and forms, including inherited/shared resource holders, without removing descriptions still used by surviving content. Synthetic saved-byte and preservation regressions cover the cleanup. Estimates unchanged.
+
+- **2026-10-17 (M6, review fixes):** Detection dialogs block document shortcuts and canvas input. Escape and Cancel release input while cancelled workers finish. Duplicate filtering requires coverage of both rectangles, and explicit installation repairs missing or incorrect notices offline without rewriting correct files. Regressions failed before the fixes. All 495 scoped tests passed, with one ignored. Clippy, WASM, attribution, layering and parity checks passed. Rebased onto upstream `12fcc641`; estimates unchanged.
+
+- **2026-10-17 (M6, 0.9.0 rebase):** Rebased FFDetr detection onto upstream `645016ad`. Kept the 0.9.0 workspace versions and updated the new detector dependency and lockfile entry to match. Estimates unchanged.
+
+- **2026-10-17 (M6, detection progress):** The detection bar follows the displayed page number, so page 10 of 10 fills its width. A real-widget regression covers the first page, last page and completion; it failed before the fix. Estimates unchanged.
+
+- **2026-10-17 (M6, desktop field detection):** Prepare a form uses FFDetr with first-use consent for a separate 121 MB model, progress/cancel/retry, atomic verified installation and offline model reuse. Added confined status/install/managed-detection tools, UI regressions and translated prompts. Validation: 822 scoped tests passed, plus Clippy, WASM, assets, layering and parity checks; native UI detected 245 fields on the local evaluation PDF. `cargo xtask form-model-package` prepares separately attributed release assets, excluded from app installers. Publication of GitHub model release `models-ffdetr-576-v1` remains a maintainer prerequisite; browser delivery and broader evaluation remain pending. Estimates unchanged.
+
+- **2026-10-17 (M6, native field detection):** First native FFDetr integration: local RTen inference, bounded and hash-verified model loading, cancellable snapshot jobs, stale-result rejection, transparent widgets, and explicit-model `form_detect_fields` CLI/MCP support with one inference pass per request. Synthetic end-to-end coverage includes preview, fill, save/reopen, undo/redo and confinement. Real-model CLI save/reopen and same-image comparison against CommonForms verified; native and WASM checks pass. No model binary or default GUI switch is shipped; distribution, UI workers and wider accuracy evaluation remain pending. Estimates unchanged.
 - **2026-10-15 (M6, AcroForm XML text):** Plain AcroForm XML imports retain all direct text around comments and processing instructions, including CDATA and character references. Synthetic regressions verify exact values and unknown catalog data after incremental and full save/reopen. Nested-element and XFA interpretation are unchanged. Estimates unchanged.
 - **2026-10-15 (M6, #1917 refresh):** Integrated upstream `99941daa` while retaining the XML/XFDF attribute whitespace correction and all upstream progress. Only independent documentation conflicts required resolution; focused production and test files are unchanged from the previously green CI head. Estimates unchanged.
 - **2026-10-15 (M1, #2267 refresh):** Integrated upstream `99941daa` while retaining the raw-deflate fallback correction and all upstream progress. Only independent documentation conflicts required resolution; focused production and test files are unchanged from the previously green CI head. Estimates unchanged.
@@ -506,6 +520,11 @@ Newest first: the date, what moved, and the new overall estimate.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-17 | patch | M6: fix detection dialog input, distinct overlapping fields and offline licence notice repair. Estimates unchanged. |
+| 2026-10-17 | patch | M6: rebase FFDetr onto upstream 0.9.0 and retain the workspace version bump. Estimates unchanged. |
+| 2026-10-17 | patch | M6: align the detection bar with the displayed page; regression covers the last page at full width. Estimates unchanged. |
+| 2026-10-17 | minor | M6 desktop first-use model download and background FFDetr detection; separate public model release pending, estimates unchanged. |
+| 2026-10-17 | minor | M6 native FFDetr engine and automation integration; explicit local model only. Default UI and model packaging remain pending; estimates unchanged. |
 | 2026-10-15 | minor | M6: Plain AcroForm XML imports retain all direct text around comments and processing instructions, including CDATA and character references. Estimates unchanged. |
 | 2026-10-13 | minor | M6: XML/XFDF attribute whitespace survives form and comment export/import; estimates unchanged |
 | 2026-10-14 | minor | M1: raw-deflate fallback preserves decoding-limit errors in strict and tolerant decoding; synthetic filter and COS stream regressions. Estimates unchanged. |
