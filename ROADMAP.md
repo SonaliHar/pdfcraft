@@ -161,6 +161,18 @@ Ranked; detail and the full milestone table in [docs/roadmap.md](docs/roadmap.md
 | 8 | 1.0 polish: performance, right-to-left, missing languages, keyboard-only (M14) | 55–95 |
 
 ## Progress log
+
+- **2026-10-18 (M8, PR #2598 replacement-text refresh):** Integrated upstream d8b27058, preserving its replacement-description retirement alongside bounded metadata matching and conservative packet removal. Estimates unchanged.
+
+- **2026-10-18 (M8, PR #2598 timing refresh):** Integrated upstream 12fcc641 and adopted its complete deterministic render/pen-test fix, superseding this branch's earlier timing workaround. Metadata redaction behavior and estimates unchanged.
+
+- **2026-10-18 (M8, PR #2598 refresh):** Integrated upstream 645016ad, preserving metadata-redaction limits and matching behavior alongside stream-boundary comment handling. Estimates unchanged.
+
+- **2026-10-16 (M8, PR #2598 review follow-up):** Match processing-instruction data without matching targets; bound fragment collection and total metadata comparison/decoding work, removing scoped metadata on exhaustion. Saved-secret regressions inspect reopened objects and decoded streams, with a compressed positive control. Whole-run matching policy and estimates unchanged.
+- **2026-10-16 (M8, PR #2598):** Metadata comparison handles ambiguous TJ word gaps without breaking intra-word kerning, collapses whitespace, and matches decoded XML values rather than markup names. Partial/reordered-name matching and resource limits are unchanged. Estimates unchanged.
+
+- **2026-10-16 (M5, PR #2598 CI):** Pen preview regressions hold raster delivery while checking pending strokes, then wait for delivery by state. Adapted narrowly from #2812; no fullscreen or redaction behavior change. Estimates unchanged.
+- **2026-10-15 (M8, #2448):** Applying redactions clears what the marks removed from document metadata too: `/Info` entries whose value repeats a removed text run (case-insensitive) go with their mirrored XMP property, and an XMP stream that still holds removed text where per-entry editing cannot reach — custom schemas, entity-escaped values, page-level packets, or a stream that cannot be decoded and read — is removed whole, like the hidden-information metadata category. Unrelated entries and the rest of an editable packet survive. Text inside images and runs under two characters leave no searchable string, so Remove hidden information (metadata) remains the certain path. `redact` now uses `organize` (registered as a sideways edge). Estimates unchanged.
 - **2026-10-18 (M8, #1350):** Integrated current main while preserving content-stream comment boundaries. Hidden-text cleanup retires unused named replacement descriptions on rewritten pages and forms, including inherited/shared resource holders, without removing descriptions still used by surviving content. Synthetic saved-byte and preservation regressions cover the cleanup. Estimates unchanged.
 - **2026-10-15 (M6, AcroForm XML text):** Plain AcroForm XML imports retain all direct text around comments and processing instructions, including CDATA and character references. Synthetic regressions verify exact values and unknown catalog data after incremental and full save/reopen. Nested-element and XFA interpretation are unchanged. Estimates unchanged.
 - **2026-10-15 (M6, #1917 refresh):** Integrated upstream `99941daa` while retaining the XML/XFDF attribute whitespace correction and all upstream progress. Only independent documentation conflicts required resolution; focused production and test files are unchanged from the previously green CI head. Estimates unchanged.
